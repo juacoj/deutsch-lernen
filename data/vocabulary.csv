@@ -1,0 +1,289 @@
+﻿id,word,article,translation,level,category,plural,example_de,example_es,has_article,part_of_speech
+1,Tisch,der,mesa,A1,casa,Tische,Der Tisch ist groß.,La mesa es grande.,True,noun
+2,Stuhl,der,silla,A1,casa,Stühle,Der Stuhl ist bequem.,La silla es cómoda.,True,noun
+3,Schrank,der,armario,A1,casa,Schränke,Der Schrank ist alt.,El armario es viejo.,True,noun
+4,Kühlschrank,der,nevera,A1,casa,Kühlschränke,Der Kühlschrank ist voll.,La nevera está llena.,True,noun
+5,Herd,der,cocina/estufa,A1,casa,Herde,Der Herd ist neu.,La cocina es nueva.,True,noun
+6,Teppich,der,alfombra,A1,casa,Teppiche,Der Teppich ist rot.,La alfombra es roja.,True,noun
+7,Boden,der,suelo,A1,casa,Böden,Der Boden ist sauber.,El suelo está limpio.,True,noun
+8,Garten,der,jardín,A1,casa,Gärten,Der Garten ist schön.,El jardín es bonito.,True,noun
+9,Balkon,der,balcón,A1,casa,Balkone,Der Balkon ist klein.,El balcón es pequeño.,True,noun
+10,Mann,der,hombre,A1,personas,Männer,Der Mann arbeitet heute.,El hombre trabaja hoy.,True,noun
+11,Vater,der,padre,A1,familia,Väter,Mein Vater ist zu Hause.,Mi padre está en casa.,True,noun
+12,Bruder,der,hermano,A1,familia,Brüder,Mein Bruder wohnt in Berlin.,Mi hermano vive en Berlín.,True,noun
+13,Sohn,der,hijo,A1,familia,Söhne,Ihr Sohn ist fünf Jahre alt.,Su hijo tiene cinco años.,True,noun
+14,Freund,der,amigo,A1,personas,Freunde,Mein Freund kommt morgen.,Mi amigo viene mañana.,True,noun
+15,Lehrer,der,profesor,A1,trabajo,Lehrer,Der Lehrer erklärt die Aufgabe.,El profesor explica el ejercicio.,True,noun
+16,Arzt,der,médico,A1,trabajo,Ärzte,Der Arzt arbeitet im Krankenhaus.,El médico trabaja en el hospital.,True,noun
+17,Tag,der,día,A1,tiempo,Tage,Der Tag ist lang.,El día es largo.,True,noun
+18,Morgen,der,mañana,A1,tiempo,Morgen,Morgen habe ich Zeit.,Mañana tengo tiempo.,True,noun
+19,Abend,der,tarde/noche,A1,tiempo,Abende,Der Abend ist ruhig.,La tarde es tranquila.,True,noun
+20,Montag,der,lunes,A1,tiempo,Montage,Am Montag arbeite ich.,El lunes trabajo.,True,noun
+21,Sommer,der,verano,A1,tiempo,Sommer,Der Sommer ist warm.,El verano es cálido.,True,noun
+22,Frau,die,mujer,A1,personas,Frauen,Die Frau wartet draußen.,La mujer espera afuera.,True,noun
+23,Mutter,die,madre,A1,familia,Mütter,Meine Mutter kocht gern.,A mi madre le gusta cocinar.,True,noun
+24,Schwester,die,hermana,A1,familia,Schwestern,Meine Schwester studiert.,Mi hermana estudia.,True,noun
+25,Tochter,die,hija,A1,familia,Töchter,Ihre Tochter ist zehn Jahre alt.,Su hija tiene diez años.,True,noun
+26,Freundin,die,amiga,A1,personas,Freundinnen,Meine Freundin spricht Deutsch.,Mi amiga habla alemán.,True,noun
+27,Lehrerin,die,profesora,A1,trabajo,Lehrerinnen,Die Lehrerin ist nett.,La profesora es amable.,True,noun
+28,Arbeit,die,trabajo,A1,trabajo,Arbeiten,Die Arbeit beginnt um acht.,El trabajo empieza a las ocho.,True,noun
+29,Schule,die,escuela,A1,educación,Schulen,Die Schule ist neben dem Park.,La escuela está al lado del parque.,True,noun
+30,Universität,die,universidad,A1,educación,Universitäten,Die Universität ist groß.,La universidad es grande.,True,noun
+31,Stadt,die,ciudad,A1,lugares,Städte,Die Stadt ist sehr schön.,La ciudad es muy bonita.,True,noun
+32,Straße,die,calle,A1,lugares,Straßen,Die Straße ist lang.,La calle es larga.,True,noun
+33,Tür,die,puerta,A1,casa,Türen,Die Tür ist offen.,La puerta está abierta.,True,noun
+34,Fenster,das,ventana,A1,casa,Fenster,Das Fenster ist geschlossen.,La ventana está cerrada.,True,noun
+35,Haus,das,casa,A1,casa,Häuser,Das Haus ist alt.,La casa es vieja.,True,noun
+36,Zimmer,das,habitación,A1,casa,Zimmer,Das Zimmer ist hell.,La habitación es luminosa.,True,noun
+37,Bett,das,cama,A1,casa,Betten,Das Bett ist bequem.,La cama es cómoda.,True,noun
+38,Bad,das,baño,A1,casa,Bäder,Das Bad ist klein.,El baño es pequeño.,True,noun
+39,Küche,die,cocina,A1,casa,Küchen,Die Küche ist sauber.,La cocina está limpia.,True,noun
+40,Buch,das,libro,A1,educación,Bücher,Das Buch ist interessant.,El libro es interesante.,True,noun
+41,Kind,das,niño/niña,A1,familia,Kinder,Das Kind spielt im Garten.,El niño juega en el jardín.,True,noun
+42,Auto,das,coche,A1,transporte,Autos,Das Auto ist neu.,El coche es nuevo.,True,noun
+43,Fahrrad,das,bicicleta,A1,transporte,Fahrräder,Das Fahrrad steht draußen.,La bicicleta está afuera.,True,noun
+44,Handy,das,móvil,A1,tecnología,Handys,Mein Handy ist kaputt.,Mi móvil está roto.,True,noun
+45,Telefon,das,teléfono,A1,tecnología,Telefone,Das Telefon klingelt.,El teléfono suena.,True,noun
+46,Wasser,das,agua,A1,comida,—,Das Wasser ist kalt.,El agua está fría.,True,noun
+47,Brot,das,pan,A1,comida,Brote,Das Brot ist frisch.,El pan está fresco.,True,noun
+48,Essen,das,comida,A1,comida,—,Das Essen ist lecker.,La comida está rica.,True,noun
+49,Frühstück,das,desayuno,A1,comida,Frühstücke,Das Frühstück ist fertig.,El desayuno está listo.,True,noun
+50,Getränk,das,bebida,A1,comida,Getränke,Das Getränk ist kalt.,La bebida está fría.,True,noun
+51,gehen,,ir,A1,verbos,—,Ich gehe nach Hause.,Voy a casa.,False,verb
+52,kommen,,venir,A1,verbos,—,Ich komme morgen.,Vengo mañana.,False,verb
+53,sein,,ser/estar,A1,verbos,—,Ich bin müde.,Estoy cansado/a.,False,verb
+54,haben,,tener,A1,verbos,—,Ich habe ein Auto.,Tengo un coche.,False,verb
+55,machen,,hacer,A1,verbos,—,Was machst du heute?,¿Qué haces hoy?,False,verb
+56,arbeiten,,trabajar,A1,verbos,—,Ich arbeite in Zürich.,Trabajo en Zúrich.,False,verb
+57,lernen,,aprender/estudiar,A1,verbos,—,Ich lerne Deutsch.,Aprendo alemán.,False,verb
+58,sprechen,,hablar,A1,verbos,—,Wir sprechen Deutsch.,Hablamos alemán.,False,verb
+59,essen,,comer,A1,verbos,—,Wir essen zusammen.,Comemos juntos.,False,verb
+60,trinken,,beber,A1,verbos,—,Ich trinke Kaffee.,Bebo café.,False,verb
+61,schlafen,,dormir,A1,verbos,—,Das Kind schläft.,El niño duerme.,False,verb
+62,lesen,,leer,A1,verbos,—,Ich lese ein Buch.,Leo un libro.,False,verb
+63,schreiben,,escribir,A1,verbos,—,Sie schreibt eine E-Mail.,Ella escribe un correo.,False,verb
+64,kaufen,,comprar,A1,verbos,—,Ich kaufe Brot.,Compro pan.,False,verb
+65,wohnen,,vivir/residir,A1,verbos,—,Ich wohne in Bern.,Vivo en Berna.,False,verb
+66,fahren,,ir/conducir,A1,verbos,—,Wir fahren mit dem Bus.,Vamos en autobús.,False,verb
+67,sehen,,ver,A1,verbos,—,Ich sehe einen Film.,Veo una película.,False,verb
+68,hören,,oír/escuchar,A1,verbos,—,Ich höre Musik.,Escucho música.,False,verb
+69,finden,,encontrar,A1,verbos,—,Ich finde den Schlüssel.,Encuentro la llave.,False,verb
+70,brauchen,,necesitar,A1,verbos,—,Ich brauche Hilfe.,Necesito ayuda.,False,verb
+71,möchten,,querer,A1,verbos,—,Ich möchte einen Kaffee.,Quisiera un café.,False,verb
+72,können,,poder/saber,A1,verbos,—,Ich kann Deutsch sprechen.,Puedo hablar alemán.,False,verb
+73,müssen,,tener que,A1,verbos,—,Ich muss arbeiten.,Tengo que trabajar.,False,verb
+74,wollen,,querer,A1,verbos,—,Ich will nach Hause.,Quiero ir a casa.,False,verb
+75,groß,,grande,A1,adjetivos,—,Das Haus ist groß.,La casa es grande.,False,adjective
+76,klein,,pequeño,A1,adjetivos,—,Die Wohnung ist klein.,El piso es pequeño.,False,adjective
+77,gut,,bueno,A1,adjetivos,—,Das Essen ist gut.,La comida está buena.,False,adjective
+78,schlecht,,malo,A1,adjetivos,—,Das Wetter ist schlecht.,El tiempo es malo.,False,adjective
+79,neu,,nuevo,A1,adjetivos,—,Das Auto ist neu.,El coche es nuevo.,False,adjective
+80,alt,,viejo,A1,adjetivos,—,Das Haus ist alt.,La casa es vieja.,False,adjective
+81,schön,,bonito,A1,adjetivos,—,Die Stadt ist schön.,La ciudad es bonita.,False,adjective
+82,teuer,,caro,A1,adjetivos,—,Das Hotel ist teuer.,El hotel es caro.,False,adjective
+83,billig,,barato,A1,adjetivos,—,Das Ticket ist billig.,El billete es barato.,False,adjective
+84,schnell,,rápido,A1,adjetivos,—,Der Zug ist schnell.,El tren es rápido.,False,adjective
+85,langsam,,lento,A1,adjetivos,—,Der Bus ist langsam.,El autobús es lento.,False,adjective
+86,wichtig,,importante,A2,adjetivos,—,Das ist sehr wichtig.,Eso es muy importante.,False,adjective
+87,möglich,,posible,A2,adjetivos,—,Das ist heute möglich.,Eso es posible hoy.,False,adjective
+88,einfach,,fácil/simple,A2,adjetivos,—,Die Aufgabe ist einfach.,El ejercicio es fácil.,False,adjective
+89,schwierig,,difícil,A2,adjetivos,—,Die Prüfung ist schwierig.,El examen es difícil.,False,adjective
+90,interessant,,interesante,A2,adjetivos,—,Der Film ist interessant.,La película es interesante.,False,adjective
+91,langweilig,,aburrido,A2,adjetivos,—,Der Kurs ist langweilig.,El curso es aburrido.,False,adjective
+92,gesund,,sano,A2,adjetivos,—,Obst ist gesund.,La fruta es sana.,False,adjective
+93,krank,,enfermo,A2,adjetivos,—,Ich bin krank.,Estoy enfermo/a.,False,adjective
+94,müde,,cansado,A1,adjetivos,—,Ich bin müde.,Estoy cansado/a.,False,adjective
+95,glücklich,,feliz,A2,adjetivos,—,Sie ist glücklich.,Ella está feliz.,False,adjective
+96,traurig,,triste,A2,adjetivos,—,Er ist traurig.,Él está triste.,False,adjective
+97,Wohnung,die,piso/apartamento,A1,casa,Wohnungen,Die Wohnung hat drei Zimmer.,El piso tiene tres habitaciones.,True,noun
+98,Miete,die,alquiler,A2,casa,Mieten,Die Miete ist hoch.,El alquiler es alto.,True,noun
+99,Nachbar,der,vecino,A2,personas,Nachbarn,Der Nachbar ist freundlich.,El vecino es amable.,True,noun
+100,Nachbarin,die,vecina,A2,personas,Nachbarinnen,Die Nachbarin hilft uns.,La vecina nos ayuda.,True,noun
+101,Familie,die,familia,A1,familia,Familien,Meine Familie lebt in Spanien.,Mi familia vive en España.,True,noun
+102,Eltern,die,padres,A1,familia,—,Meine Eltern kommen morgen.,Mis padres vienen mañana.,True,noun
+103,Großvater,der,abuelo,A2,familia,Großväter,Mein Großvater liest viel.,Mi abuelo lee mucho.,True,noun
+104,Großmutter,die,abuela,A2,familia,Großmütter,Meine Großmutter kocht gern.,A mi abuela le gusta cocinar.,True,noun
+105,Geburtstag,der,cumpleaños,A1,tiempo,Geburtstage,Heute habe ich Geburtstag.,Hoy es mi cumpleaños.,True,noun
+106,Urlaub,der,vacaciones,A1,viajes,Urlaube,Wir machen im Sommer Urlaub.,Nos vamos de vacaciones en verano.,True,noun
+107,Reise,die,viaje,A2,viajes,Reisen,Die Reise dauert drei Tage.,El viaje dura tres días.,True,noun
+108,Flugzeug,das,avión,A1,transporte,Flugzeuge,Das Flugzeug landet bald.,El avión aterriza pronto.,True,noun
+109,Bahnhof,der,estación de tren,A1,transporte,Bahnhöfe,Der Bahnhof ist im Zentrum.,La estación está en el centro.,True,noun
+110,Haltestelle,die,parada,A2,transporte,Haltestellen,Die Haltestelle ist dort.,La parada está allí.,True,noun
+111,Zug,der,tren,A1,transporte,Züge,Der Zug kommt um zehn Uhr.,El tren llega a las diez.,True,noun
+112,Bus,der,autobús,A1,transporte,Busse,Der Bus ist voll.,El autobús está lleno.,True,noun
+113,Fahrkarte,die,billete,A2,transporte,Fahrkarten,Ich brauche eine Fahrkarte.,Necesito un billete.,True,noun
+114,Rechnung,die,factura,A2,compras,Rechnungen,Die Rechnung kommt per E-Mail.,La factura llega por correo.,True,noun
+115,Preis,der,precio,A1,compras,Preise,Der Preis ist zu hoch.,El precio es demasiado alto.,True,noun
+116,Geschäft,das,tienda/negocio,A1,compras,Geschäfte,Das Geschäft ist geschlossen.,La tienda está cerrada.,True,noun
+117,Markt,der,mercado,A1,compras,Märkte,Wir kaufen Gemüse auf dem Markt.,Compramos verduras en el mercado.,True,noun
+118,Lebensmittel,die,alimentos,A2,comida,—,Die Lebensmittel sind frisch.,Los alimentos están frescos.,True,noun
+119,Gemüse,das,verdura,A1,comida,—,Ich esse gern Gemüse.,Me gusta comer verdura.,True,noun
+120,Obst,das,fruta,A1,comida,—,Das Obst ist frisch.,La fruta está fresca.,True,noun
+121,Fleisch,das,carne,A1,comida,—,Ich esse kein Fleisch.,No como carne.,True,noun
+122,Fisch,der,pescado,A1,comida,Fische,Der Fisch ist frisch.,El pescado está fresco.,True,noun
+123,Käse,der,queso,A1,comida,Käse,Der Käse schmeckt gut.,El queso sabe bien.,True,noun
+124,Milch,die,leche,A1,comida,—,Die Milch ist im Kühlschrank.,La leche está en la nevera.,True,noun
+125,Kaffee,der,café,A1,comida,Kaffees,Ich trinke morgens Kaffee.,Bebo café por la mañana.,True,noun
+126,Tee,der,té,A1,comida,Tees,Ich möchte einen Tee.,Quiero un té.,True,noun
+127,Restaurant,das,restaurante,A1,comida,Restaurants,Das Restaurant ist voll.,El restaurante está lleno.,True,noun
+128,Frage,die,pregunta,A1,comunicación,Fragen,Ich habe eine Frage.,Tengo una pregunta.,True,noun
+129,Antwort,die,respuesta,A1,comunicación,Antworten,Die Antwort ist richtig.,La respuesta es correcta.,True,noun
+130,Problem,das,problema,A2,comunicación,Probleme,Wir haben ein Problem.,Tenemos un problema.,True,noun
+131,Termin,der,cita,A2,trabajo,Termine,Ich habe morgen einen Termin.,Mañana tengo una cita.,True,noun
+132,Nachricht,die,mensaje/noticia,A2,comunicación,Nachrichten,Ich habe eine Nachricht bekommen.,He recibido un mensaje.,True,noun
+133,E-Mail,die,correo electrónico,A1,tecnología,E-Mails,Ich schreibe eine E-Mail.,Escribo un correo electrónico.,True,noun
+134,Internet,das,internet,A1,tecnología,—,Das Internet ist langsam.,Internet es lento.,True,noun
+135,Computer,der,ordenador,A1,tecnología,Computer,Der Computer funktioniert nicht.,El ordenador no funciona.,True,noun
+136,Datei,die,archivo,A2,tecnología,Dateien,Die Datei ist zu groß.,El archivo es demasiado grande.,True,noun
+137,Passwort,das,contraseña,A2,tecnología,Passwörter,Ich habe mein Passwort vergessen.,He olvidado mi contraseña.,True,noun
+138,Arbeitgeber,der,empleador,B1,trabajo,Arbeitgeber,Der Arbeitgeber bietet flexible Arbeitszeiten.,El empleador ofrece horarios flexibles.,True,noun
+139,Mitarbeiter,der,empleado/colaborador,B1,trabajo,Mitarbeiter,Die Mitarbeiter arbeiten zusammen.,Los empleados trabajan juntos.,True,noun
+140,Kollege,der,compañero de trabajo,A2,trabajo,Kollegen,Mein Kollege hilft mir.,Mi compañero me ayuda.,True,noun
+141,Kollegin,die,compañera de trabajo,A2,trabajo,Kolleginnen,Meine Kollegin kommt später.,Mi compañera viene más tarde.,True,noun
+142,Chef,der,jefe,A2,trabajo,Chefs,Der Chef ist heute nicht da.,El jefe no está hoy.,True,noun
+143,Firma,die,empresa,A2,trabajo,Firmen,Die Firma sucht neue Mitarbeiter.,La empresa busca nuevos empleados.,True,noun
+144,Beruf,der,profesión,A2,trabajo,Berufe,Was ist dein Beruf?,¿Cuál es tu profesión?,True,noun
+145,Erfahrung,die,experiencia,B1,trabajo,Erfahrungen,Sie hat viel Erfahrung.,Ella tiene mucha experiencia.,True,noun
+146,Ausbildung,die,formación profesional,B1,educación,Ausbildungen,Er macht eine Ausbildung.,Él hace una formación profesional.,True,noun
+147,Prüfung,die,examen,A2,educación,Prüfungen,Die Prüfung ist nächste Woche.,El examen es la próxima semana.,True,noun
+148,Ergebnis,das,resultado,B1,educación,Ergebnisse,Das Ergebnis ist positiv.,El resultado es positivo.,True,noun
+149,Entscheidung,die,decisión,B1,abstracto,Entscheidungen,Das war eine schwierige Entscheidung.,Fue una decisión difícil.,True,noun
+150,Meinung,die,opinión,B1,comunicación,Meinungen,Was ist deine Meinung?,¿Cuál es tu opinión?,True,noun
+151,Grund,der,razón/motivo,B1,abstracto,Gründe,Es gibt einen wichtigen Grund.,Hay una razón importante.,True,noun
+152,Möglichkeit,die,posibilidad,B1,abstracto,Möglichkeiten,Wir haben mehrere Möglichkeiten.,Tenemos varias posibilidades.,True,noun
+153,Plan,der,plan,A2,abstracto,Pläne,Wir brauchen einen neuen Plan.,Necesitamos un plan nuevo.,True,noun
+154,Ziel,das,objetivo/meta,B1,abstracto,Ziele,Mein Ziel ist B1.,Mi objetivo es B1.,True,noun
+155,Hilfe,die,ayuda,A1,comunicación,—,Danke für deine Hilfe.,Gracias por tu ayuda.,True,noun
+156,Anfang,der,principio/comienzo,B1,tiempo,Anfänge,Am Anfang war es schwierig.,Al principio fue difícil.,True,noun
+157,Ende,das,final,A1,tiempo,Enden,Am Ende war alles gut.,Al final todo estuvo bien.,True,noun
+158,Zeit,die,tiempo,A1,tiempo,Zeiten,Ich habe keine Zeit.,No tengo tiempo.,True,noun
+159,Woche,die,semana,A1,tiempo,Wochen,Nächste Woche habe ich Urlaub.,La próxima semana estoy de vacaciones.,True,noun
+160,Monat,der,mes,A1,tiempo,Monate,Der Monat hat vier Wochen.,El mes tiene cuatro semanas.,True,noun
+161,Jahr,das,año,A1,tiempo,Jahre,Dieses Jahr lerne ich Deutsch.,Este año aprendo alemán.,True,noun
+162,Wetter,das,tiempo/clima,A1,naturaleza,—,Das Wetter ist heute schön.,Hoy hace buen tiempo.,True,noun
+163,Regen,der,lluvia,A1,naturaleza,—,Der Regen beginnt am Abend.,La lluvia empieza por la tarde.,True,noun
+164,Schnee,der,nieve,A1,naturaleza,—,Der Schnee ist weiß.,La nieve es blanca.,True,noun
+165,Sonne,die,sol,A1,naturaleza,Sonnen,Die Sonne scheint.,Brilla el sol.,True,noun
+166,Wind,der,viento,A2,naturaleza,Winde,Der Wind ist stark.,El viento es fuerte.,True,noun
+167,Natur,die,naturaleza,A2,naturaleza,—,Wir lieben die Natur.,Nos encanta la naturaleza.,True,noun
+168,Umwelt,die,medio ambiente,B1,naturaleza,—,Wir müssen die Umwelt schützen.,Tenemos que proteger el medio ambiente.,True,noun
+169,schützen,,proteger,B1,verbos,—,Wir schützen die Umwelt.,Protegemos el medio ambiente.,False,verb
+170,erklären,,explicar,A2,verbos,—,Kannst du das erklären?,¿Puedes explicar eso?,False,verb
+171,vergessen,,olvidar,A2,verbos,—,Ich habe den Termin vergessen.,He olvidado la cita.,False,verb
+172,verstehen,,entender,A1,verbos,—,Ich verstehe die Frage.,Entiendo la pregunta.,False,verb
+173,beginnen,,empezar,A2,verbos,—,Der Kurs beginnt um neun.,El curso empieza a las nueve.,False,verb
+174,enden,,terminar,A2,verbos,—,Der Film endet um zehn.,La película termina a las diez.,False,verb
+175,bezahlen,,pagar,A1,verbos,—,Ich möchte bezahlen.,Quiero pagar.,False,verb
+176,bestellen,,pedir/encargar,A2,verbos,—,Wir bestellen eine Pizza.,Pedimos una pizza.,False,verb
+177,beschreiben,,describir,B1,verbos,—,Kannst du das Bild beschreiben?,¿Puedes describir la imagen?,False,verb
+178,entscheiden,,decidir,B1,verbos,—,Wir müssen heute entscheiden.,Tenemos que decidir hoy.,False,verb
+179,versuchen,,intentar,B1,verbos,—,Ich versuche es noch einmal.,Lo intento otra vez.,False,verb
+180,erreichen,,alcanzar/lograr,B1,verbos,—,Wir wollen unser Ziel erreichen.,Queremos alcanzar nuestro objetivo.,False,verb
+181,verbessern,,mejorar,B1,verbos,—,Ich möchte mein Deutsch verbessern.,Quiero mejorar mi alemán.,False,verb
+182,erlauben,,permitir,B1,verbos,—,Das ist hier nicht erlaubt.,Eso no está permitido aquí.,False,verb
+183,treffen,,encontrarse/conocer,A2,verbos,—,Wir treffen uns um acht.,Nos encontramos a las ocho.,False,verb
+184,helfen,,ayudar,A1,verbos,—,Kannst du mir helfen?,¿Puedes ayudarme?,False,verb
+185,geben,,dar,A1,verbos,—,Ich gebe dir das Buch.,Te doy el libro.,False,verb
+186,nehmen,,tomar/coger,A1,verbos,—,Ich nehme den Bus.,Cojo el autobús.,False,verb
+187,bringen,,traer/llevar,A2,verbos,—,Ich bringe dir einen Kaffee.,Te traigo un café.,False,verb
+188,bekommen,,recibir/obtener,A2,verbos,—,Ich bekomme eine E-Mail.,Recibo un correo.,False,verb
+189,bleiben,,quedarse,A2,verbos,—,Wir bleiben zu Hause.,Nos quedamos en casa.,False,verb
+190,reisen,,viajar,A2,verbos,—,Wir reisen im Sommer.,Viajamos en verano.,False,verb
+191,suchen,,buscar,A1,verbos,—,Ich suche meine Schlüssel.,Busco mis llaves.,False,verb
+192,zeigen,,mostrar,A2,verbos,—,Ich zeige dir die Wohnung.,Te muestro el piso.,False,verb
+193,öffnen,,abrir,A1,verbos,—,Bitte öffnen Sie die Tür.,"Por favor, abra la puerta.",False,verb
+194,schließen,,cerrar,A1,verbos,—,Bitte schließen Sie das Fenster.,"Por favor, cierre la ventana.",False,verb
+195,warten,,esperar,A1,verbos,—,Ich warte auf den Bus.,Espero el autobús.,False,verb
+196,anrufen,,llamar por teléfono,A2,verbos,—,Ich rufe dich später an.,Te llamo más tarde.,False,verb
+197,aussehen,,parecer/tener aspecto,B1,verbos,—,Du siehst müde aus.,Pareces cansado/a.,False,verb
+198,aufstehen,,levantarse,A1,verbos,—,Ich stehe um sieben Uhr auf.,Me levanto a las siete.,False,verb
+199,einkaufen,,hacer compras,A1,verbos,—,Wir kaufen am Samstag ein.,Hacemos las compras el sábado.,False,verb
+200,frühstücken,,desayunar,A1,verbos,—,Ich frühstücke um acht.,Desayuno a las ocho.,False,verb
+201,meinen,,opinar/querer decir,B1,verbos,—,Was meinst du?,¿Qué opinas?,False,verb
+202,glauben,,creer,A2,verbos,—,"Ich glaube, das ist richtig.",Creo que eso es correcto.,False,verb
+203,hoffen,,esperar/desear,B1,verbos,—,"Ich hoffe, dass du kommst.",Espero que vengas.,False,verb
+204,kennen,,conocer,A2,verbos,—,Kennst du diese Stadt?,¿Conoces esta ciudad?,False,verb
+205,wissen,,saber,A1,verbos,—,Ich weiß es nicht.,No lo sé.,False,verb
+206,denken,,pensar,A2,verbos,—,Ich denke an dich.,Pienso en ti.,False,verb
+207,tragen,,llevar/vestir,A2,verbos,—,Sie trägt eine Jacke.,Ella lleva una chaqueta.,False,verb
+208,waschen,,lavar,A1,verbos,—,Ich wasche meine Hände.,Me lavo las manos.,False,verb
+209,duschen,,ducharse,A1,verbos,—,Ich dusche morgens.,Me ducho por la mañana.,False,verb
+210,schmecken,,saber/tener sabor,A2,verbos,—,Die Suppe schmeckt gut.,La sopa sabe bien.,False,verb
+211,fühlen,,sentir,B1,verbos,—,Ich fühle mich gut.,Me siento bien.,False,verb
+212,sich erinnern,,recordar,B1,verbos,—,Ich erinnere mich daran.,Lo recuerdo.,False,verb
+213,Gesundheit,die,salud,A2,salud,—,Gesundheit ist wichtig.,La salud es importante.,True,noun
+214,Kopf,der,cabeza,A1,cuerpo,Köpfe,Mein Kopf tut weh.,Me duele la cabeza.,True,noun
+215,Hand,die,mano,A1,cuerpo,Hände,Meine Hände sind kalt.,Mis manos están frías.,True,noun
+216,Auge,das,ojo,A1,cuerpo,Augen,Mein Auge tut weh.,Me duele el ojo.,True,noun
+217,Fuß,der,pie,A1,cuerpo,Füße,Mein Fuß tut weh.,Me duele el pie.,True,noun
+218,Bauch,der,barriga/estómago,A2,cuerpo,Bäuche,Mein Bauch tut weh.,Me duele el estómago.,True,noun
+219,Kleidung,die,ropa,A2,compras,—,Die Kleidung ist teuer.,La ropa es cara.,True,noun
+220,Jacke,die,chaqueta,A1,ropa,Jacken,Die Jacke ist warm.,La chaqueta es abrigada.,True,noun
+221,Schuh,der,zapato,A1,ropa,Schuhe,Meine Schuhe sind neu.,Mis zapatos son nuevos.,True,noun
+222,Hemd,das,camisa,A1,ropa,Hemden,Das Hemd ist weiß.,La camisa es blanca.,True,noun
+223,Hose,die,pantalón,A1,ropa,Hosen,Die Hose ist schwarz.,El pantalón es negro.,True,noun
+224,Kleid,das,vestido,A1,ropa,Kleider,Das Kleid ist schön.,El vestido es bonito.,True,noun
+225,Farbe,die,color,A1,ropa,Farben,Meine Lieblingsfarbe ist Blau.,Mi color favorito es el azul.,True,noun
+226,rot,,rojo,A1,colores,—,Das Auto ist rot.,El coche es rojo.,False,other
+227,blau,,azul,A1,colores,—,Der Himmel ist blau.,El cielo es azul.,False,other
+228,grün,,verde,A1,colores,—,Das Gras ist grün.,La hierba es verde.,False,other
+229,schwarz,,negro,A1,colores,—,Die Tasche ist schwarz.,El bolso es negro.,False,other
+230,weiß,,blanco,A1,colores,—,Das Papier ist weiß.,El papel es blanco.,False,other
+231,grau,,gris,A1,colores,—,Der Himmel ist grau.,El cielo es gris.,False,other
+232,hell,,claro,A2,adjetivos,—,Das Zimmer ist hell.,La habitación es luminosa.,False,adjective
+233,dunkel,,oscuro,A2,adjetivos,—,Das Zimmer ist dunkel.,La habitación está oscura.,False,adjective
+234,laut,,ruidoso,A2,adjetivos,—,Die Musik ist laut.,La música está alta.,False,adjective
+235,leise,,silencioso/bajo,A2,adjetivos,—,Bitte sei leise.,"Por favor, guarda silencio.",False,adjective
+236,freundlich,,amable,A2,adjetivos,—,Der Mann ist freundlich.,El hombre es amable.,False,adjective
+237,unfreundlich,,antipático,B1,adjetivos,—,Der Verkäufer war unfreundlich.,El vendedor fue antipático.,False,adjective
+238,zufrieden,,satisfecho,B1,adjetivos,—,Ich bin mit dem Ergebnis zufrieden.,Estoy satisfecho/a con el resultado.,False,adjective
+239,bereit,,listo/preparado,B1,adjetivos,—,Ich bin bereit.,Estoy listo/a.,False,adjective
+240,frei,,libre,A2,adjetivos,—,Bist du morgen frei?,¿Estás libre mañana?,False,adjective
+241,besetzt,,ocupado,A2,adjetivos,—,Der Platz ist besetzt.,El asiento está ocupado.,False,adjective
+242,allein,,solo,A2,adjetivos,—,Ich wohne allein.,Vivo solo/a.,False,adjective
+243,zusammen,,juntos,A1,adverbios,—,Wir lernen zusammen.,Estudiamos juntos.,False,adverb
+244,immer,,siempre,A1,adverbios,—,Ich komme immer pünktlich.,Siempre llego puntual.,False,adverb
+245,oft,,a menudo,A1,adverbios,—,Ich gehe oft ins Kino.,Voy a menudo al cine.,False,adverb
+246,manchmal,,a veces,A1,adverbios,—,Manchmal arbeite ich zu Hause.,A veces trabajo en casa.,False,adverb
+247,selten,,raramente,A2,adverbios,—,Ich esse selten Fleisch.,Rara vez como carne.,False,adverb
+248,nie,,nunca,A1,adverbios,—,Ich trinke nie Alkohol.,Nunca bebo alcohol.,False,adverb
+249,schon,,ya,A1,adverbios,—,Ich bin schon fertig.,Ya he terminado.,False,adverb
+250,noch,,todavía/aún,A1,adverbios,—,Ich bin noch nicht fertig.,Todavía no he terminado.,False,adverb
+251,wieder,,de nuevo,A1,adverbios,—,Bis morgen wieder!,¡Hasta mañana de nuevo!,False,adverb
+252,bald,,pronto,A2,adverbios,—,Bis bald!,¡Hasta pronto!,False,adverb
+253,gerade,,ahora mismo,A2,adverbios,—,Ich esse gerade.,Estoy comiendo ahora mismo.,False,adverb
+254,deshalb,,por eso,B1,conectores,—,"Ich bin müde, deshalb gehe ich nach Hause.","Estoy cansado/a, por eso me voy a casa.",False,other
+255,trotzdem,,sin embargo/aun así,B1,conectores,—,"Es regnet, trotzdem gehen wir spazieren.","Llueve, aun así salimos a pasear.",False,other
+256,obwohl,,aunque,B1,conectores,—,"Obwohl es regnet, gehen wir raus.","Aunque llueve, salimos.",False,other
+257,weil,,porque,A2,conectores,—,"Ich bleibe zu Hause, weil ich krank bin.",Me quedo en casa porque estoy enfermo/a.,False,other
+258,dass,,que,A2,conectores,—,"Ich glaube, dass er kommt.",Creo que él viene.,False,other
+259,wenn,,si/cuando,A2,conectores,—,"Wenn ich Zeit habe, komme ich.","Si tengo tiempo, vengo.",False,other
+260,während,,mientras,B1,conectores,—,"Während ich koche, höre ich Musik.","Mientras cocino, escucho música.",False,other
+261,ob,,si,B1,conectores,—,"Ich weiß nicht, ob er kommt.",No sé si viene.,False,other
+262,Nachmittag,der,tarde,A1,tiempo,Nachmittage,Am Nachmittag habe ich Zeit.,Por la tarde tengo tiempo.,True,noun
+263,Nacht,die,noche,A1,tiempo,Nächte,In der Nacht schlafe ich.,Por la noche duermo.,True,noun
+264,Minute,die,minuto,A1,tiempo,Minuten,Warte eine Minute.,Espera un minuto.,True,noun
+265,Stunde,die,hora,A1,tiempo,Stunden,Der Kurs dauert zwei Stunden.,El curso dura dos horas.,True,noun
+266,Sekunde,die,segundo,A1,tiempo,Sekunden,"Eine Sekunde, bitte.","Un segundo, por favor.",True,noun
+267,Wochenende,das,fin de semana,A1,tiempo,Wochenenden,Am Wochenende habe ich frei.,El fin de semana tengo libre.,True,noun
+268,Feierabend,der,fin de la jornada laboral,B1,trabajo,—,Nach Feierabend gehe ich nach Hause.,Después del trabajo me voy a casa.,True,noun
+269,Einladung,die,invitación,A2,social,Einladungen,Danke für die Einladung.,Gracias por la invitación.,True,noun
+270,Geschenk,das,regalo,A1,social,Geschenke,Das Geschenk ist für dich.,El regalo es para ti.,True,noun
+271,Party,die,fiesta,A1,social,Partys,Die Party beginnt um acht.,La fiesta empieza a las ocho.,True,noun
+272,Fest,das,fiesta/festival,A2,social,Feste,Wir feiern ein großes Fest.,Celebramos una gran fiesta.,True,noun
+273,Brief,der,carta,A1,comunicación,Briefe,Ich schreibe einen Brief.,Escribo una carta.,True,noun
+274,Adresse,die,dirección,A1,comunicación,Adressen,Wie ist deine Adresse?,¿Cuál es tu dirección?,True,noun
+275,Name,der,nombre,A1,personas,Namen,Wie ist dein Name?,¿Cómo te llamas?,True,noun
+276,Vorname,der,nombre de pila,A1,personas,Vornamen,Mein Vorname ist Anna.,Mi nombre es Anna.,True,noun
+277,Nachname,der,apellido,A1,personas,Nachnamen,Wie ist Ihr Nachname?,¿Cuál es su apellido?,True,noun
+278,Alter,das,edad,A1,personas,—,Wie alt bist du?,¿Cuántos años tienes?,True,noun
+279,Sprache,die,idioma/lengua,A1,idiomas,Sprachen,Deutsch ist eine schöne Sprache.,El alemán es un idioma bonito.,True,other
+280,Wort,das,palabra,A1,idiomas,Wörter,Was bedeutet dieses Wort?,¿Qué significa esta palabra?,True,other
+281,Satz,der,frase/oración,A1,idiomas,Sätze,Schreib einen Satz.,Escribe una frase.,True,other
+282,Bedeutung,die,significado,B1,idiomas,Bedeutungen,Was ist die Bedeutung?,¿Cuál es el significado?,True,other
+283,Aussprache,die,pronunciación,B1,idiomas,Aussprachen,Die Aussprache ist schwierig.,La pronunciación es difícil.,True,other
+284,Fehler,der,error,A2,idiomas,Fehler,Ich mache viele Fehler.,Cometo muchos errores.,True,other
+285,Übung,die,ejercicio/práctica,A1,educación,Übungen,Wir machen eine Übung.,Hacemos un ejercicio.,True,noun
+286,Unterricht,der,clase,A1,educación,—,Der Unterricht beginnt um neun.,La clase empieza a las nueve.,True,noun
+287,Kurs,der,curso,A1,educación,Kurse,Der Deutschkurs ist interessant.,El curso de alemán es interesante.,True,noun
+288,Note,die,nota/calificación,A2,educación,Noten,Ich habe eine gute Note bekommen.,He sacado una buena nota.,True,noun
