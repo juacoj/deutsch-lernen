@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import random
-from datetime import datetime
+import re
 from pathlib import Path
-
+from datetime import datetime
 
 # ============================================================
 # CONFIGURACIÓN
@@ -13,11 +13,25 @@ from pathlib import Path
 st.set_page_config(
     page_title="Deutsch Lernen",
     page_icon="🇩🇪",
-    layout="centered"
+    layout="centered",
 )
 
-DATA_FILE = Path("data/vocabulary_A1_B1_plus_100.xlsx")
-DB_FILE = "progress.db"
+BASE_DIR = Path(__file__).resolve().parent
+DATA_FILE = BASE_DIR / "data" / "vocabulary_A1_B1_plus_400.xlsx"
+DB_FILE = BASE_DIR / "progress.db"
+
+MODULES = [
+    "Artículos",
+    "Vocabulario",
+    "Plurales",
+    "Partizip II",
+    "Casos",
+    "Declinaciones",
+]
+
+LEVELS = ["Todos", "A1", "A2", "B1"]
+
+GERMAN_CHARS = ["ä", "ö", "ü", "Ä", "Ö", "Ü", "ß"]
 
 
 # ============================================================
@@ -27,135 +41,87 @@ DB_FILE = "progress.db"
 st.markdown(
     """
     <style>
-    .main-title {
-        text-align: center;
-        font-size: 42px;
-        font-weight: 700;
-        margin-bottom: 0;
-    }
-
-    .subtitle {
-        text-align: center;
-        color: #777;
-        margin-bottom: 30px;
-    }
-
     .question {
-        font-size: 30px;
-        font-weight: 600;
+        font-size: 2.2rem;
+        font-weight: 700;
         text-align: center;
-        padding: 20px;
+        margin: 1rem 0;
     }
 
     .translation {
+        font-size: 1.2rem;
         text-align: center;
-        color: #777;
-        font-size: 18px;
+        margin-bottom: 1.5rem;
     }
 
-    .case-box {
-        padding: 15px;
-        border-radius: 10px;
-        background-color: #f5f5f5;
-        margin-top: 15px;
+    .case_sentence {
+        font-size: 1.35rem;
+        line-height: 1.8;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .small_info {
+        text-align: center;
+        opacity: 0.8;
     }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# BASE DE DATOS
+# NORMALIZACIÓN
 # ============================================================
 
-def init_db():
+def normalize(value):
+    if value is None:
+        return ""
 
-    conn = sqlite3.connect(DB_FILE)
+    text = str(value).strip().lower()
 
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS answers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            word TEXT,
-            level TEXT,
-            module TEXT,
-            selected TEXT,
-            expected TEXT,
-            correct INTEGER,
-            timestamp TEXT
-        )
-        """
-    )
+    replacements = {
+        "ä": "ä",
+        "ö": "ö",
+        "ü": "ü",
+        "ß": "ß",
+    }
 
-    conn.commit()
-    conn.close()
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+
+    text = re.sub(r"\s+", " ", text)
+
+    return text
 
 
-def save_answer(
-    word,
-    level,
-    module,
-    selected,
-    expected,
-    correct
-):
+def clean_text(value):
+    if pd.isna(value):
+        return ""
 
-    conn = sqlite3.connect(DB_FILE)
-
-    conn.execute(
-        """
-        INSERT INTO answers
-        (
-            word,
-            level,
-            module,
-            selected,
-            expected,
-            correct,
-            timestamp
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            word,
-            level,
-            module,
-            selected,
-            expected,
-            int(correct),
-            datetime.now().isoformat()
-        )
-    )
-
-    conn.commit()
-    conn.close()
-
-
-init_db()
+    return str(value).strip()
 
 
 # ============================================================
-# CARGAR VOCABULARIO
+# CARGA DEL EXCEL
 # ============================================================
 
 @st.cache_data
 def load_vocabulary():
-
     if not DATA_FILE.exists():
-
         st.error(
-            f"No encuentro el archivo:\n\n"
-            f"`{DATA_FILE}`"
+            "No se encontró el archivo de vocabulario.\n\n"
+            f"Ruta esperada:\n{DATA_FILE}"
         )
-
         st.stop()
 
     df = pd.read_excel(
-        DATA_FILE
+        DATA_FILE,
+        sheet_name="Vocabulary",
+        engine="openpyxl",
     )
 
-    # Asegurar columnas
     required_columns = [
         "id",
         "word",
@@ -169,202 +135,485 @@ def load_vocabulary():
         "has_article",
         "part_of_speech",
         "preteritum",
-        "partizip_II"
+        "partizip_II",
     ]
 
     for column in required_columns:
-
         if column not in df.columns:
             df[column] = ""
 
-    # Convertir todo a texto para evitar problemas
     for column in required_columns:
-
-        df[column] = (
-            df[column]
-            .fillna("")
-            .astype(str)
-            .str.strip()
-        )
+        if column in df.columns:
+            df[column] = df[column].fillna("").astype(str)
 
     return df
 
 
+@st.cache_data
+def load_cases_from_excel():
+    """
+    Carga la hoja Cases si existe.
+    El módulo de Casos utiliza además un generador de plantillas,
+    por lo que no depende exclusivamente de esta hoja.
+    """
+    try:
+        cases = pd.read_excel(
+            DATA_FILE,
+            sheet_name="Cases",
+            engine="openpyxl",
+        )
+        return cases
+    except Exception:
+        return pd.DataFrame()
+
+
 df = load_vocabulary()
+cases_excel = load_cases_from_excel()
 
 
 # ============================================================
-# NORMALIZACIÓN
+# SQLITE — HISTORIAL Y PROGRESO
 # ============================================================
 
-def normalize(text):
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
 
-    if text is None:
-        return ""
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS answer_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            word TEXT,
+            level TEXT,
+            module TEXT,
+            user_answer TEXT,
+            correct_answer TEXT,
+            correct INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
 
-    return (
-        str(text)
-        .strip()
-        .lower()
-        .replace("ß", "ß")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS question_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            module TEXT NOT NULL,
+            question_id TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_question_history
+        ON question_history(module, question_id, created_at)
+        """
+    )
+
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+
+def save_answer(
+    word,
+    level,
+    module,
+    user_answer,
+    correct_answer,
+    correct,
+):
+    conn = sqlite3.connect(DB_FILE)
+
+    conn.execute(
+        """
+        INSERT INTO answer_history
+        (
+            word,
+            level,
+            module,
+            user_answer,
+            correct_answer,
+            correct
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            str(word),
+            str(level),
+            str(module),
+            str(user_answer),
+            str(correct_answer),
+            int(bool(correct)),
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def register_question(module, question_id):
+    conn = sqlite3.connect(DB_FILE)
+
+    conn.execute(
+        """
+        INSERT INTO question_history
+        (module, question_id)
+        VALUES (?, ?)
+        """,
+        (module, str(question_id)),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_recent_question_ids(module, limit=40):
+    conn = sqlite3.connect(DB_FILE)
+
+    rows = conn.execute(
+        """
+        SELECT question_id
+        FROM question_history
+        WHERE module = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        """,
+        (module, limit),
+    ).fetchall()
+
+    conn.close()
+
+    return {str(row[0]) for row in rows}
+
+
+def choose_from_dataframe(
+    available,
+    module,
+    id_column="id",
+    recent_limit=40,
+):
+    """
+    Selecciona una pregunta evitando las últimas N preguntas
+    usadas en ese módulo.
+    """
+    if available.empty:
+        return None
+
+    available = available.copy()
+
+    if id_column not in available.columns:
+        available["_question_id"] = available.index.astype(str)
+        id_column = "_question_id"
+
+    available[id_column] = (
+        available[id_column]
+        .fillna("")
+        .astype(str)
+    )
+
+    recent_ids = get_recent_question_ids(
+        module,
+        limit=recent_limit,
+    )
+
+    candidates = available[
+        ~available[id_column].isin(recent_ids)
+    ]
+
+    # Si ya se utilizaron todas, empezamos a reutilizar.
+    if candidates.empty:
+        candidates = available
+
+    selected = candidates.sample(
+        n=1,
+        random_state=random.randint(1, 10_000_000),
+    ).iloc[0]
+
+    question_id = selected[id_column]
+
+    register_question(
+        module,
+        question_id,
+    )
+
+    return selected.to_dict()
+
+
+# ============================================================
+# ESTADO DE SESIÓN
+# ============================================================
+
+if "module" not in st.session_state:
+    st.session_state.module = "Artículos"
+
+if "previous_module" not in st.session_state:
+    st.session_state.previous_module = "Artículos"
+
+if "level" not in st.session_state:
+    st.session_state.level = "Todos"
+
+if "questions" not in st.session_state:
+    st.session_state.questions = {
+        module: None
+        for module in MODULES
+    }
+
+if "answered" not in st.session_state:
+    st.session_state.answered = {
+        module: False
+        for module in MODULES
+    }
+
+if "last_correct" not in st.session_state:
+    st.session_state.last_correct = {
+        module: None
+        for module in MODULES
+    }
+
+if "last_answer" not in st.session_state:
+    st.session_state.last_answer = {
+        module: ""
+        for module in MODULES
+    }
+
+if "score" not in st.session_state:
+    st.session_state.score = 0
+
+if "total" not in st.session_state:
+    st.session_state.total = 0
+
+if "answer_text" not in st.session_state:
+    st.session_state.answer_text = ""
+
+if "plural_input" not in st.session_state:
+    st.session_state.plural_input = ""
+
+if "particip_input" not in st.session_state:
+    st.session_state.particip_input = ""
+
+if "vocab_input" not in st.session_state:
+    st.session_state.vocab_input = ""
+
+if "case_input" not in st.session_state:
+    st.session_state.case_input = ""
+
+if "decl_article_input" not in st.session_state:
+    st.session_state.decl_article_input = ""
+
+if "decl_adjective_input" not in st.session_state:
+    st.session_state.decl_adjective_input = ""
+
+
+# ============================================================
+# FUNCIONES DE ESTADO
+# ============================================================
+
+def reset_module(module, available=None):
+    st.session_state.questions[module] = None
+    st.session_state.answered[module] = False
+    st.session_state.last_correct[module] = None
+    st.session_state.last_answer[module] = ""
+
+    if module == "Vocabulario":
+        st.session_state.vocab_input = ""
+
+    elif module == "Plurales":
+        st.session_state.plural_input = ""
+
+    elif module == "Partizip II":
+        st.session_state.particip_input = ""
+
+    elif module == "Casos":
+        st.session_state.case_input = ""
+
+    elif module == "Declinaciones":
+        st.session_state.decl_article_input = ""
+        st.session_state.decl_adjective_input = ""
+
+    if available is not None and not available.empty:
+        st.session_state.questions[module] = choose_from_dataframe(
+            available,
+            module,
+        )
+
+
+def german_keyboard(state_key):
+    """
+    Teclado alemán reutilizable.
+    """
+    cols = st.columns(7)
+
+    for col, char in zip(cols, GERMAN_CHARS):
+        if col.button(
+            char,
+            key=f"{state_key}_keyboard_{char}",
+        ):
+            current = st.session_state.get(
+                state_key,
+                "",
+            )
+
+            st.session_state[state_key] = (
+                current + char
+            )
+
+            st.rerun()
+
+
+def mark_answer(
+    module,
+    word,
+    level,
+    user_answer,
+    correct_answer,
+    correct,
+):
+    st.session_state.last_correct[module] = correct
+    st.session_state.last_answer[module] = user_answer
+    st.session_state.answered[module] = True
+
+    st.session_state.total += 1
+
+    if correct:
+        st.session_state.score += 1
+
+    save_answer(
+        word,
+        level,
+        module,
+        user_answer,
+        correct_answer,
+        correct,
     )
 
 
-# ============================================================
-# SESSION STATE
-# ============================================================
+def next_question(module, available):
+    st.session_state.questions[module] = choose_from_dataframe(
+        available,
+        module,
+    )
 
-defaults = {
+    st.session_state.answered[module] = False
+    st.session_state.last_correct[module] = None
+    st.session_state.last_answer[module] = ""
 
-    "module": "Artículos",
+    if module == "Vocabulario":
+        st.session_state.vocab_input = ""
 
-    "level": "Todos",
+    elif module == "Plurales":
+        st.session_state.plural_input = ""
 
-    "current_word": None,
+    elif module == "Partizip II":
+        st.session_state.particip_input = ""
 
-    "answered": False,
+    elif module == "Casos":
+        st.session_state.case_input = ""
 
-    "last_correct": False,
+    elif module == "Declinaciones":
+        st.session_state.decl_article_input = ""
+        st.session_state.decl_adjective_input = ""
 
-    "last_answer": "",
-
-    "score": 0,
-
-    "total": 0,
-
-    "answer_text": "",
-
-    "case_answer_text": "",
-
-    "past_answer_text": ""
-}
-
-for key, value in defaults.items():
-
-    if key not in st.session_state:
-        st.session_state[key] = value
+    st.rerun()
 
 
 # ============================================================
-# NUEVA PREGUNTA
-# ============================================================
-
-def reset_question(data):
-
-    if data.empty:
-        return
-
-    selected = data.sample(1).iloc[0].to_dict()
-
-    st.session_state.current_word = selected
-
-    st.session_state.answered = False
-
-    st.session_state.last_correct = False
-
-    st.session_state.last_answer = ""
-
-    st.session_state.answer_text = ""
-
-    st.session_state.case_answer_text = ""
-
-    st.session_state.past_answer_text = ""
-
-
-# ============================================================
-# TECLADO ALEMÁN
-# ============================================================
-
-def german_keyboard(state_key):
-
-    st.caption("Caracteres alemanes")
-
-    chars = [
-        "ä",
-        "ö",
-        "ü",
-        "Ä",
-        "Ö",
-        "Ü",
-        "ß"
-    ]
-
-    columns = st.columns(7)
-
-    for column, char in zip(columns, chars):
-
-        with column:
-
-            if st.button(
-                char,
-                key=f"{state_key}_{char}"
-            ):
-
-                st.session_state[state_key] += char
-
-                st.rerun()
-
-
-# ============================================================
-# SIDEBAR
+# FILTRO DE NIVEL
 # ============================================================
 
 st.sidebar.title("🇩🇪 Deutsch Lernen")
 
-module = st.sidebar.radio(
-    "Módulo",
-    [
-        "Artículos",
-        "Vocabulario",
-        "Plurales",
-        "Präteritum",
-        "Casos"
-    ]
-)
-
-level = st.sidebar.selectbox(
+selected_level = st.sidebar.selectbox(
     "Nivel",
-    [
-        "Todos",
-        "A1",
-        "A2",
-        "B1"
-    ]
+    LEVELS,
+    index=LEVELS.index(st.session_state.level),
 )
 
-st.session_state.module = module
-st.session_state.level = level
+if selected_level != st.session_state.level:
+    st.session_state.level = selected_level
+
+    # Al cambiar de nivel, cada módulo obtiene su siguiente
+    # pregunta compatible.
+    for module_name in MODULES:
+        st.session_state.questions[module_name] = None
+        st.session_state.answered[module_name] = False
 
 
-# ============================================================
-# FILTRAR NIVEL
-# ============================================================
+filtered = df.copy()
 
-if level == "Todos":
-
-    filtered = df.copy()
-
-else:
-
-    filtered = df[
-        df["level"] == level
+if st.session_state.level != "Todos":
+    filtered = filtered[
+        filtered["level"].str.upper().str.strip()
+        == st.session_state.level
     ].copy()
 
 
 # ============================================================
-# CABECERA
+# MENÚ
 # ============================================================
 
-st.markdown(
-    '<div class="main-title">🇩🇪 Deutsch Lernen</div>',
-    unsafe_allow_html=True
+module = st.sidebar.selectbox(
+    "Módulo",
+    MODULES,
+    index=MODULES.index(st.session_state.module),
 )
 
-st.markdown(
-    '<div class="subtitle">'
-    'Aprende alemán de A1 a B1'
-    '</div>',
-    unsafe_allow_html=True
+# Si el usuario cambia de módulo, NO se arrastra la palabra
+# del módulo anterior.
+if module != st.session_state.previous_module:
+    st.session_state.module = module
+    st.session_state.previous_module = module
+
+    if st.session_state.questions[module] is None:
+        st.session_state.answered[module] = False
+
+
+# ============================================================
+# ESTADÍSTICAS
+# ============================================================
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📊 Progreso")
+
+if st.session_state.total > 0:
+    percentage = (
+        st.session_state.score
+        / st.session_state.total
+        * 100
+    )
+else:
+    percentage = 0
+
+st.sidebar.write(
+    f"Correctas: **{st.session_state.score}**"
+)
+
+st.sidebar.write(
+    f"Respondidas: **{st.session_state.total}**"
+)
+
+st.sidebar.write(
+    f"Precisión: **{percentage:.1f}%**"
+)
+
+if st.sidebar.button("🔄 Reiniciar puntuación"):
+    st.session_state.score = 0
+    st.session_state.total = 0
+    st.rerun()
+
+
+# ============================================================
+# TÍTULO
+# ============================================================
+
+st.title("🇩🇪 Deutsch Lernen")
+
+st.caption(
+    f"Nivel: {st.session_state.level} · "
+    f"Módulo: {module}"
 )
 
 
@@ -374,121 +623,96 @@ st.markdown(
 
 if module == "Artículos":
 
-    article_words = filtered[
-        (
-            filtered["part_of_speech"]
-            .str.lower()
-            .str.strip()
-            == "noun"
-        )
-        &
-        (
-            filtered["article"]
-            .isin(["der", "die", "das"])
-        )
+    articles = filtered[
+        filtered["article"]
+        .str.lower()
+        .str.strip()
+        .isin(["der", "die", "das"])
     ].copy()
 
-    if article_words.empty:
-
+    if articles.empty:
         st.warning(
-            "No hay palabras disponibles."
+            "No hay palabras con artículos para este nivel."
         )
-
         st.stop()
 
-    if (
-        st.session_state.current_word is None
-        or
-        st.session_state.current_word["word"]
-        not in article_words["word"].values
-    ):
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = choose_from_dataframe(
+            articles,
+            module,
+        )
 
-        reset_question(article_words)
+    word = st.session_state.questions[module]
 
-    word = st.session_state.current_word
-
-    st.subheader("🔤 ¿Qué artículo lleva?")
+    st.subheader("📝 ¿Qué artículo lleva?")
 
     st.markdown(
         f'<div class="question">{word["word"]}</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    st.markdown(
-        f'<div class="translation">'
-        f'🇪🇸 {word["translation"]}'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    if word["translation"]:
+        st.markdown(
+            f'<div class="translation">'
+            f'🇪🇸 {word["translation"]}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
-    if not st.session_state.answered:
+    if not st.session_state.answered[module]:
 
-        columns = st.columns(3)
+        cols = st.columns(3)
 
-        for column, article in zip(
-            columns,
-            ["der", "die", "das"]
+        for col, article in zip(
+            cols,
+            ["der", "die", "das"],
         ):
 
-            with column:
+            if col.button(
+                article,
+                key=f"article_{article}_{word['id']}",
+                use_container_width=True,
+            ):
 
-                if st.button(
+                correct = (
+                    normalize(article)
+                    == normalize(word["article"])
+                )
+
+                mark_answer(
+                    module,
+                    word["word"],
+                    word["level"],
                     article,
-                    use_container_width=True
-                ):
+                    word["article"],
+                    correct,
+                )
 
-                    correct = (
-                        article
-                        == word["article"]
-                    )
-
-                    st.session_state.last_correct = correct
-                    st.session_state.last_answer = article
-                    st.session_state.answered = True
-                    st.session_state.total += 1
-
-                    if correct:
-                        st.session_state.score += 1
-
-                    save_answer(
-                        word["word"],
-                        word["level"],
-                        "Artículos",
-                        article,
-                        word["article"],
-                        correct
-                    )
-
-                    st.rerun()
+                st.rerun()
 
     else:
 
-        if st.session_state.last_correct:
-
+        if st.session_state.last_correct[module]:
             st.success("✅ ¡Correcto!")
-
         else:
-
             st.error(
                 f"❌ Incorrecto. "
-                f"Es **{word['article']}**."
+                f"Es **{word['article']} {word['word']}**."
             )
 
-        st.write(
-            f"**{word['article']} {word['word']}**"
-        )
-
         if word["example_de"]:
-
             st.info(
                 f"📝 {word['example_de']}"
             )
 
-        if st.button("➡️ Siguiente"):
-
-            reset_question(article_words)
-
-            st.rerun()
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_articles_{word['id']}",
+        ):
+            next_question(
+                module,
+                articles,
+            )
 
 
 # ============================================================
@@ -497,115 +721,110 @@ if module == "Artículos":
 
 elif module == "Vocabulario":
 
-    if filtered.empty:
+    vocab = filtered[
+        filtered["word"].str.strip() != ""
+    ].copy()
 
-        st.warning(
-            "No hay vocabulario disponible."
-        )
-
+    if vocab.empty:
+        st.warning("No hay vocabulario disponible.")
         st.stop()
 
-    if (
-        st.session_state.current_word is None
-        or
-        st.session_state.current_word["word"]
-        not in filtered["word"].values
-    ):
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = choose_from_dataframe(
+            vocab,
+            module,
+        )
 
-        reset_question(filtered)
+    word = st.session_state.questions[module]
 
-    word = st.session_state.current_word
+    st.subheader("🗣️ Vocabulario")
 
-    st.subheader("📚 Vocabulario")
+    # 50/50 alemán -> español o español -> alemán
+    if "direction" not in word:
+        word["direction"] = random.choice(
+            ["de_to_es", "es_to_de"]
+        )
 
-    direction = st.radio(
-        "Dirección",
-        [
-            "Alemán → Español",
-            "Español → Alemán"
-        ],
-        horizontal=True
-    )
+    if word["direction"] == "de_to_es":
 
-    if direction == "Alemán → Español":
+        st.write("Traduce al español:")
 
-        question = word["word"]
+        st.markdown(
+            f'<div class="question">{word["word"]}</div>',
+            unsafe_allow_html=True,
+        )
 
-        expected = word["translation"]
+        correct_answer = word["translation"]
 
     else:
 
-        question = word["translation"]
+        st.write("Traduce al alemán:")
 
-        expected = word["word"]
+        st.markdown(
+            f'<div class="question">{word["translation"]}</div>',
+            unsafe_allow_html=True,
+        )
 
-    st.markdown(
-        f'<div class="question">{question}</div>',
-        unsafe_allow_html=True
-    )
+        correct_answer = word["word"]
 
-    if not st.session_state.answered:
+    if not st.session_state.answered[module]:
 
         answer = st.text_input(
             "Tu respuesta",
-            value=st.session_state.answer_text,
-            key="vocab_input"
+            key="vocab_input",
         )
 
-        st.session_state.answer_text = answer
+        german_keyboard("vocab_input")
 
-        german_keyboard("answer_text")
-
-        if st.button("Comprobar"):
+        if st.button(
+            "Comprobar",
+            key=f"check_vocab_{word['id']}",
+        ):
 
             correct = (
                 normalize(answer)
-                == normalize(expected)
+                == normalize(correct_answer)
             )
 
-            st.session_state.last_correct = correct
-            st.session_state.last_answer = answer
-            st.session_state.answered = True
-            st.session_state.total += 1
-
-            if correct:
-                st.session_state.score += 1
-
-            save_answer(
+            mark_answer(
+                module,
                 word["word"],
                 word["level"],
-                "Vocabulario",
                 answer,
-                expected,
-                correct
+                correct_answer,
+                correct,
             )
 
             st.rerun()
 
     else:
 
-        if st.session_state.last_correct:
-
+        if st.session_state.last_correct[module]:
             st.success("✅ ¡Correcto!")
-
         else:
-
             st.error(
-                f"❌ Incorrecto. "
-                f"Respuesta: **{expected}**"
+                f"❌ La respuesta correcta es: "
+                f"**{correct_answer}**"
             )
 
         if word["example_de"]:
-
             st.info(
                 f"📝 {word['example_de']}"
             )
 
-        if st.button("➡️ Siguiente"):
+        if word["example_es"]:
+            st.caption(
+                f"🇪🇸 {word['example_es']}"
+            )
 
-            reset_question(filtered)
-
-            st.rerun()
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_vocab_{word['id']}",
+        ):
+            next_question(
+                module,
+                vocab,
+            )
 
 
 # ============================================================
@@ -614,767 +833,1196 @@ elif module == "Vocabulario":
 
 elif module == "Plurales":
 
-    invalid_plural = [
+    plural_values = (
+        filtered["plural"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    articles_values = (
+        filtered["article"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    pos_values = (
+        filtered["part_of_speech"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    invalid_plural = {
         "",
+        "-",
         "—",
         "–",
-        "-",
         "none",
-        "nan"
-    ]
+        "nan",
+        "null",
+    }
 
-    plural_words = filtered[
-        (
-            filtered["part_of_speech"]
-            .str.lower()
-            .str.strip()
-            == "noun"
+    plurals = filtered[
+        pos_values.eq("noun")
+        &
+        articles_values.isin(
+            ["der", "die", "das"]
         )
         &
-        (
-            filtered["article"]
-            .isin(["der", "die", "das"])
-        )
-        &
-        (
-            ~filtered["plural"]
-            .str.lower()
-            .str.strip()
-            .isin(invalid_plural)
-        )
+        ~plural_values.isin(invalid_plural)
     ].copy()
 
-    if plural_words.empty:
-
+    if plurals.empty:
         st.warning(
-            "No hay sustantivos con plural disponible."
+            "No hay sustantivos con plurales válidos."
         )
-
         st.stop()
 
-    if (
-        st.session_state.current_word is None
-        or
-        st.session_state.current_word["word"]
-        not in plural_words["word"].values
-    ):
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = choose_from_dataframe(
+            plurals,
+            module,
+        )
 
-        reset_question(plural_words)
+    word = st.session_state.questions[module]
 
-    word = st.session_state.current_word
-
-    st.subheader("🔢 Escribe el plural")
+    st.subheader("🔤 Plurales")
 
     st.markdown(
         f'<div class="question">'
         f'{word["article"]} {word["word"]}'
         f'</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    st.markdown(
-        f'<div class="translation">'
-        f'🇪🇸 {word["translation"]}'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-    if not st.session_state.answered:
-
-        answer = st.text_input(
-            "Plural",
-            value=st.session_state.answer_text,
-            key="plural_input"
+    if word["translation"]:
+        st.markdown(
+            f'<div class="translation">'
+            f'🇪🇸 {word["translation"]}'
+            f'</div>',
+            unsafe_allow_html=True,
         )
 
-        st.session_state.answer_text = answer
+    if not st.session_state.answered[module]:
 
-        german_keyboard("answer_text")
+        plural = st.text_input(
+            "Escribe el plural:",
+            key="plural_input",
+        )
 
-        if st.button("Comprobar"):
+        german_keyboard("plural_input")
 
-            expected = word["plural"]
+        if st.button(
+            "Comprobar",
+            key=f"check_plural_{word['id']}",
+        ):
+
+            correct_answer = word["plural"]
 
             correct = (
-                normalize(answer)
-                == normalize(expected)
+                normalize(plural)
+                == normalize(correct_answer)
             )
 
-            st.session_state.last_correct = correct
-            st.session_state.last_answer = answer
-            st.session_state.answered = True
-            st.session_state.total += 1
-
-            if correct:
-                st.session_state.score += 1
-
-            save_answer(
+            mark_answer(
+                module,
                 word["word"],
                 word["level"],
-                "Plurales",
-                answer,
-                expected,
-                correct
+                plural,
+                correct_answer,
+                correct,
             )
 
             st.rerun()
 
     else:
 
-        if st.session_state.last_correct:
+        if st.session_state.last_correct[module]:
+            st.success("✅ ¡Correcto!")
+        else:
+            st.error(
+                f"❌ El plural correcto es: "
+                f"**{word['plural']}**"
+            )
+
+        if word["example_de"]:
+            st.info(
+                f"📝 {word['example_de']}"
+            )
+
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_plural_{word['id']}",
+        ):
+            next_question(
+                module,
+                plurals,
+            )
+
+
+# ============================================================
+# MÓDULO 4 — PARTIZIP II
+# ============================================================
+
+elif module == "Partizip II":
+
+    pos_values = (
+        filtered["part_of_speech"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    particip_values = (
+        filtered["partizip_II"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    verbs = filtered[
+        pos_values.eq("verb")
+        &
+        particip_values.ne("")
+        &
+        particip_values.str.lower().ne("nan")
+    ].copy()
+
+    if verbs.empty:
+        st.warning(
+            "No hay verbos con información de Partizip II."
+        )
+        st.stop()
+
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = choose_from_dataframe(
+            verbs,
+            module,
+        )
+
+    word = st.session_state.questions[module]
+
+    st.subheader("🇩🇪 Partizip II")
+
+    st.markdown(
+        f'<div class="question">{word["word"]}</div>',
+        unsafe_allow_html=True,
+    )
+
+    if word["translation"]:
+        st.markdown(
+            f'<div class="translation">'
+            f'🇪🇸 {word["translation"]}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    if not st.session_state.answered[module]:
+
+        particip = st.text_input(
+            "Escribe el Partizip II:",
+            key="particip_input",
+        )
+
+        german_keyboard("particip_input")
+
+        if st.button(
+            "Comprobar",
+            key=f"check_particip_{word['id']}",
+        ):
+
+            correct_answer = word["partizip_II"]
+
+            correct = (
+                normalize(particip)
+                == normalize(correct_answer)
+            )
+
+            mark_answer(
+                module,
+                word["word"],
+                word["level"],
+                particip,
+                correct_answer,
+                correct,
+            )
+
+            st.rerun()
+
+    else:
+
+        if st.session_state.last_correct[module]:
 
             st.success("✅ ¡Correcto!")
 
         else:
 
-            st.error("❌ Incorrecto.")
-
-        st.write(
-            f"El plural correcto es: "
-            f"**die {word['plural']}**"
-        )
-
-        if word["example_de"]:
-
-            st.info(
-                f"📝 {word['example_de']}"
-            )
-
-        if st.button("➡️ Siguiente"):
-
-            reset_question(plural_words)
-
-            st.rerun()
-
-
-# ============================================================
-# MÓDULO 4 — PRÄTERITUM + PARTIZIP II
-# ============================================================
-
-elif module == "Präteritum":
-
-    verbs = filtered[
-        (
-            filtered["part_of_speech"]
-            .str.lower()
-            .str.strip()
-            == "verb"
-        )
-        &
-        (
-            filtered["preteritum"].str.strip() != ""
-        )
-        &
-        (
-            filtered["partizip_II"].str.strip() != ""
-        )
-    ].copy()
-
-    if verbs.empty:
-
-        st.warning(
-            "No hay verbos con información de pasado."
-        )
-
-        st.stop()
-
-    if (
-        st.session_state.current_word is None
-        or
-        st.session_state.current_word["word"]
-        not in verbs["word"].values
-    ):
-
-        reset_question(verbs)
-
-    word = st.session_state.current_word
-
-    st.subheader(
-        "⏳ Präteritum + Partizip II"
-    )
-
-    st.markdown(
-        f'<div class="question">{word["word"]}</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        f'<div class="translation">'
-        f'🇪🇸 {word["translation"]}'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-    if not st.session_state.answered:
-
-        st.write(
-            "Escribe las dos formas:"
-        )
-
-        st.write(
-            "Präteritum"
-        )
-
-        preteritum = st.text_input(
-            "Präteritum",
-            value=st.session_state.past_answer_text,
-            key="preteritum_input"
-        )
-
-        st.session_state.past_answer_text = preteritum
-
-        st.write(
-            "Partizip II"
-        )
-
-        particip = st.text_input(
-            "Partizip II",
-            key="particip_input"
-        )
-
-        german_keyboard("past_answer_text")
-
-        if st.button("Comprobar"):
-
-            correct_preteritum = (
-                normalize(preteritum)
-                ==
-                normalize(word["preteritum"])
-            )
-
-            correct_particip = (
-                normalize(particip)
-                ==
-                normalize(word["partizip_II"])
-            )
-
-            correct = (
-                correct_preteritum
-                and
-                correct_particip
-            )
-
-            st.session_state.last_correct = correct
-
-            st.session_state.last_answer = (
-                f"{preteritum} / {particip}"
-            )
-
-            st.session_state.answered = True
-            st.session_state.total += 1
-
-            if correct:
-                st.session_state.score += 1
-
-            save_answer(
-                word["word"],
-                word["level"],
-                "Präteritum",
-                f"{preteritum} / {particip}",
-                f"{word['preteritum']} / {word['partizip_II']}",
-                correct
-            )
-
-            st.rerun()
-
-    else:
-
-        if st.session_state.last_correct:
-
-            st.success("✅ ¡Las dos formas son correctas!")
-
-        else:
-
-            st.error("❌ Hay una forma incorrecta.")
-
-            st.write(
-                f"Präteritum: "
-                f"**{word['preteritum']}**"
-            )
-
-            st.write(
-                f"Partizip II: "
+            st.error(
+                f"❌ Incorrecto. "
+                f"El Partizip II es: "
                 f"**{word['partizip_II']}**"
             )
 
         if word["example_de"]:
-
             st.info(
                 f"📝 {word['example_de']}"
             )
 
-        if st.button("➡️ Siguiente"):
-
-            reset_question(verbs)
-
-            st.rerun()
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_particip_{word['id']}",
+        ):
+            next_question(
+                module,
+                verbs,
+            )
 
 
 # ============================================================
-# MÓDULO 5 — NOMINATIV / AKKUSATIV / DATIV
+# MÓDULO 5 — CASOS
 # ============================================================
 
 elif module == "Casos":
 
+    # --------------------------------------------------------
+    # Banco de sustantivos
+    # --------------------------------------------------------
+
     nouns = filtered[
-        (
-            filtered["part_of_speech"]
-            .str.lower()
-            .str.strip()
-            == "noun"
-        )
-        &
-        (
-            filtered["article"]
-            .isin(["der", "die", "das"])
-        )
+        filtered["part_of_speech"]
+        .fillna("")
+        .str.lower()
+        .str.strip()
+        .eq("noun")
+    ].copy()
+
+    nouns = nouns[
+        nouns["article"]
+        .fillna("")
+        .str.lower()
+        .str.strip()
+        .isin(["der", "die", "das"])
     ].copy()
 
     if nouns.empty:
-
         st.warning(
-            "No hay sustantivos disponibles."
+            "No hay sustantivos adecuados para generar ejercicios."
         )
-
         st.stop()
 
     # --------------------------------------------------------
-    # Generar frases
+    # Generador de casos
     # --------------------------------------------------------
 
-    case_examples = {
-
-        "Mann": [
-            ("Nominativ", "der", "___ Mann ist nett.",
-             "El hombre es amable.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "den", "Ich sehe ___ Mann.",
-             "Veo al hombre.",
-             "Objeto directo."),
-
-            ("Dativ", "dem", "Ich helfe ___ Mann.",
-             "Ayudo al hombre.",
-             "El verbo 'helfen' utiliza Dativ.")
+    CASE_TEMPLATES = {
+        "Nominativ": [
+            {
+                "pattern": "___ {noun} arbeitet heute.",
+                "case": "Nominativ",
+                "reason": "El sustantivo es el sujeto de la oración.",
+            },
+            {
+                "pattern": "___ {noun} ist sehr groß.",
+                "case": "Nominativ",
+                "reason": "El sustantivo es el sujeto de la oración.",
+            },
+            {
+                "pattern": "___ {noun} steht vor dem Haus.",
+                "case": "Nominativ",
+                "reason": "El sustantivo es el sujeto de la oración.",
+            },
+            {
+                "pattern": "___ {noun} kommt heute.",
+                "case": "Nominativ",
+                "reason": "El sustantivo realiza la acción.",
+            },
+            {
+                "pattern": "___ {noun} ist neu.",
+                "case": "Nominativ",
+                "reason": "El sustantivo es el sujeto.",
+            },
         ],
 
-        "Frau": [
-            ("Nominativ", "die", "___ Frau arbeitet hier.",
-             "La mujer trabaja aquí.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "die", "Ich kenne ___ Frau.",
-             "Conozco a la mujer.",
-             "Objeto directo."),
-
-            ("Dativ", "der", "Ich spreche mit ___ Frau.",
-             "Hablo con la mujer.",
-             "La preposición 'mit' utiliza Dativ.")
+        "Akkusativ": [
+            {
+                "pattern": "Ich sehe ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo recibe directamente la acción de ver.",
+            },
+            {
+                "pattern": "Ich kaufe ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo es el objeto directo de kaufen.",
+            },
+            {
+                "pattern": "Ich brauche ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo funciona como objeto directo.",
+            },
+            {
+                "pattern": "Ich suche ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo es el objeto directo de suchen.",
+            },
+            {
+                "pattern": "Ich habe ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo funciona como objeto directo.",
+            },
+            {
+                "pattern": "Wir besuchen ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo es el objeto directo de besuchen.",
+            },
+            {
+                "pattern": "Er nimmt ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo es el objeto directo de nehmen.",
+            },
+            {
+                "pattern": "Sie öffnet ___ {noun}.",
+                "case": "Akkusativ",
+                "reason": "El sustantivo es el objeto directo de öffnen.",
+            },
         ],
 
-        "Kind": [
-            ("Nominativ", "das", "___ Kind spielt.",
-             "El niño juega.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "das", "Ich sehe ___ Kind.",
-             "Veo al niño.",
-             "Objeto directo."),
-
-            ("Dativ", "dem", "Ich helfe ___ Kind.",
-             "Ayudo al niño.",
-             "El verbo 'helfen' utiliza Dativ.")
+        "Dativ": [
+            {
+                "pattern": "Ich helfe ___ {noun}.",
+                "case": "Dativ",
+                "reason": "El verbo helfen rige Dativ.",
+            },
+            {
+                "pattern": "Ich danke ___ {noun}.",
+                "case": "Dativ",
+                "reason": "El verbo danken rige Dativ.",
+            },
+            {
+                "pattern": "Ich folge ___ {noun}.",
+                "case": "Dativ",
+                "reason": "El verbo folgen rige Dativ.",
+            },
+            {
+                "pattern": "Ich vertraue ___ {noun}.",
+                "case": "Dativ",
+                "reason": "El verbo vertrauen rige Dativ.",
+            },
+            {
+                "pattern": "Ich spreche mit ___ {noun}.",
+                "case": "Dativ",
+                "reason": "La preposición mit rige Dativ.",
+            },
+            {
+                "pattern": "Ich fahre mit ___ {noun}.",
+                "case": "Dativ",
+                "reason": "La preposición mit rige Dativ.",
+            },
+            {
+                "pattern": "Ich bin bei ___ {noun}.",
+                "case": "Dativ",
+                "reason": "La preposición bei rige Dativ.",
+            },
         ],
-
-        "Hund": [
-            ("Nominativ", "der", "___ Hund ist klein.",
-             "El perro es pequeño.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "den", "Ich sehe ___ Hund.",
-             "Veo al perro.",
-             "Objeto directo."),
-
-            ("Dativ", "dem", "Ich gebe ___ Hund Wasser.",
-             "Le doy agua al perro.",
-             "Objeto indirecto.")
-        ],
-
-        "Katze": [
-            ("Nominativ", "die", "___ Katze schläft.",
-             "El gato duerme.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "die", "Ich sehe ___ Katze.",
-             "Veo al gato.",
-             "Objeto directo."),
-
-            ("Dativ", "der", "Ich gebe ___ Katze Wasser.",
-             "Le doy agua al gato.",
-             "Objeto indirecto.")
-        ],
-
-        "Buch": [
-            ("Nominativ", "das", "___ Buch ist interessant.",
-             "El libro es interesante.",
-             "Sujeto de la oración."),
-
-            ("Akkusativ", "das", "Ich lese ___ Buch.",
-             "Leo el libro.",
-             "Objeto directo."),
-
-            ("Dativ", "dem", "Ich vertraue ___ Buch nicht.",
-             "No confío en el libro.",
-             "El verbo 'vertrauen' utiliza Dativ.")
-        ]
     }
 
-    # --------------------------------------------------------
-    # Construir ejercicios automáticamente
-    # --------------------------------------------------------
+    def article_for_case(base_article, case):
+        """
+        Solo transformamos artículos definidos.
+        Nominativ: der/die/das
+        Akkusativ: den/die/das
+        Dativ: dem/der/dem
+        """
+        article = normalize(base_article)
 
-    possible_cases = []
+        mapping = {
+            "Nominativ": {
+                "der": "der",
+                "die": "die",
+                "das": "das",
+            },
+            "Akkusativ": {
+                "der": "den",
+                "die": "die",
+                "das": "das",
+            },
+            "Dativ": {
+                "der": "dem",
+                "die": "der",
+                "das": "dem",
+            },
+        }
 
-    for _, noun in nouns.iterrows():
+        return mapping[case][article]
 
-        word = noun["word"]
-        article = noun["article"]
+    def create_case_question():
+        """
+        Crea una pregunta con:
+        - caso aleatorio
+        - plantilla aleatoria
+        - sustantivo compatible
+        - identificador único para anti-repetición
+        """
 
-        if word in case_examples:
+        cases = [
+            "Nominativ",
+            "Akkusativ",
+            "Dativ",
+        ]
 
-            for item in case_examples[word]:
+        # Intentamos varias veces para no repetir combinación.
+        for _ in range(30):
 
-                possible_cases.append(
-                    {
-                        "word": word,
-                        "article": article,
-                        "translation": noun["translation"],
-                        "level": noun["level"],
-                        "case": item[0],
-                        "answer": item[1],
-                        "sentence": item[2],
-                        "translation_sentence": item[3],
-                        "explanation": item[4]
-                    }
+            selected_case = random.choice(cases)
+
+            template = random.choice(
+                CASE_TEMPLATES[selected_case]
+            )
+
+            noun_row = nouns.sample(
+                n=1
+            ).iloc[0].to_dict()
+
+            article = article_for_case(
+                noun_row["article"],
+                selected_case,
+            )
+
+            sentence = template["pattern"].format(
+                noun=noun_row["word"]
+            )
+
+            question_id = (
+                f"{selected_case}|"
+                f"{template['pattern']}|"
+                f"{noun_row['id']}"
+            )
+
+            recent = get_recent_question_ids(
+                "Casos",
+                limit=100,
+            )
+
+            if question_id not in recent:
+                register_question(
+                    "Casos",
+                    question_id,
                 )
 
-        else:
+                return {
+                    "id": question_id,
+                    "case": selected_case,
+                    "pattern": template["pattern"],
+                    "sentence": sentence,
+                    "reason": template["reason"],
+                    "noun": noun_row["word"],
+                    "noun_id": noun_row["id"],
+                    "base_article": noun_row["article"],
+                    "correct_article": article,
+                    "translation": noun_row["translation"],
+                }
 
-            # Para el resto de sustantivos:
-            if article == "der":
+        # Si excepcionalmente se agotó el banco,
+        # permitimos reutilizar una combinación.
+        selected_case = random.choice(cases)
 
-                cases = [
-                    (
-                        "Nominativ",
-                        "der",
-                        f"___ {word} ist hier.",
-                        f"{word} está aquí.",
-                        "Sujeto."
-                    ),
-                    (
-                        "Akkusativ",
-                        "den",
-                        f"Ich sehe ___ {word}.",
-                        f"Veo {noun['translation']}.",
-                        "Objeto directo."
-                    ),
-                    (
-                        "Dativ",
-                        "dem",
-                        f"Ich spreche mit ___ {word}.",
-                        f"Hablo con {noun['translation']}.",
-                        "La preposición 'mit' utiliza Dativ."
-                    )
-                ]
-
-            elif article == "die":
-
-                cases = [
-                    (
-                        "Nominativ",
-                        "die",
-                        f"___ {word} ist hier.",
-                        f"{noun['translation'].capitalize()} está aquí.",
-                        "Sujeto."
-                    ),
-                    (
-                        "Akkusativ",
-                        "die",
-                        f"Ich sehe ___ {word}.",
-                        f"Veo {noun['translation']}.",
-                        "Objeto directo."
-                    ),
-                    (
-                        "Dativ",
-                        "der",
-                        f"Ich spreche mit ___ {word}.",
-                        f"Hablo con {noun['translation']}.",
-                        "La preposición 'mit' utiliza Dativ."
-                    )
-                ]
-
-            else:
-
-                cases = [
-                    (
-                        "Nominativ",
-                        "das",
-                        f"___ {word} ist hier.",
-                        f"{noun['translation'].capitalize()} está aquí.",
-                        "Sujeto."
-                    ),
-                    (
-                        "Akkusativ",
-                        "das",
-                        f"Ich sehe ___ {word}.",
-                        f"Veo {noun['translation']}.",
-                        "Objeto directo."
-                    ),
-                    (
-                        "Dativ",
-                        "dem",
-                        f"Ich spreche mit ___ {word}.",
-                        f"Hablo con {noun['translation']}.",
-                        "La preposición 'mit' utiliza Dativ."
-                    )
-                ]
-
-            for item in cases:
-
-                possible_cases.append(
-                    {
-                        "word": word,
-                        "article": article,
-                        "translation": noun["translation"],
-                        "level": noun["level"],
-                        "case": item[0],
-                        "answer": item[1],
-                        "sentence": item[2],
-                        "translation_sentence": item[3],
-                        "explanation": item[4]
-                    }
-                )
-
-    cases_df = pd.DataFrame(
-        possible_cases
-    )
-
-    if cases_df.empty:
-
-        st.warning(
-            "No hay ejercicios de casos."
+        template = random.choice(
+            CASE_TEMPLATES[selected_case]
         )
 
-        st.stop()
+        noun_row = nouns.sample(
+            n=1
+        ).iloc[0].to_dict()
+
+        article = article_for_case(
+            noun_row["article"],
+            selected_case,
+        )
+
+        question_id = (
+            f"{selected_case}|"
+            f"{template['pattern']}|"
+            f"{noun_row['id']}"
+        )
+
+        register_question(
+            "Casos",
+            question_id,
+        )
+
+        return {
+            "id": question_id,
+            "case": selected_case,
+            "pattern": template["pattern"],
+            "sentence": template["pattern"].format(
+                noun=noun_row["word"]
+            ),
+            "reason": template["reason"],
+            "noun": noun_row["word"],
+            "noun_id": noun_row["id"],
+            "base_article": noun_row["article"],
+            "correct_article": article,
+            "translation": noun_row["translation"],
+        }
 
     # --------------------------------------------------------
-    # Nueva pregunta
+    # Obtener pregunta
     # --------------------------------------------------------
 
-    if (
-        st.session_state.current_word is None
-        or
-        st.session_state.current_word.get("sentence")
-        not in cases_df["sentence"].values
-    ):
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = create_case_question()
 
-        reset_question(cases_df)
+    question = st.session_state.questions[module]
 
-    question = st.session_state.current_word
-
-    st.subheader(
-        "🇩🇪 Nominativ · Akkusativ · Dativ"
-    )
+    st.subheader("📋 Casos")
 
     st.caption(
-        "Modo mixto — sin pistas"
+        "Nominativ · Akkusativ · Dativ"
     )
 
     st.markdown(
-        f'<div class="question">'
-        f'{question["sentence"]}'
-        f'</div>',
-        unsafe_allow_html=True
+        "Completa el artículo. "
+        "**No se muestra el caso antes de responder.**"
     )
 
-    if not st.session_state.answered:
+    # Construimos la frase con un hueco visible.
+    sentence_display = question["sentence"].replace(
+        "___",
+        "_____",
+        1,
+    )
+
+    st.markdown(
+        f'<div class="case_sentence">'
+        f'{sentence_display}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    if not st.session_state.answered[module]:
 
         answer = st.text_input(
-            "Completa la frase",
-            value=st.session_state.case_answer_text,
-            key="case_input"
+            "Artículo:",
+            key="case_input",
         )
 
-        st.session_state.case_answer_text = answer
+        german_keyboard("case_input")
 
-        german_keyboard("case_answer_text")
-
-        if st.button("Comprobar"):
-
-            expected = question["answer"]
+        if st.button(
+            "Comprobar",
+            key=f"check_case_{question['id']}",
+        ):
 
             correct = (
                 normalize(answer)
-                == normalize(expected)
+                == normalize(
+                    question["correct_article"]
+                )
             )
 
-            st.session_state.last_correct = correct
-            st.session_state.last_answer = answer
-            st.session_state.answered = True
-            st.session_state.total += 1
-
-            if correct:
-                st.session_state.score += 1
-
-            save_answer(
-                question["word"],
-                question["level"],
-                "Casos",
+            mark_answer(
+                module,
+                question["noun"],
+                st.session_state.level,
                 answer,
-                expected,
-                correct
+                question["correct_article"],
+                correct,
             )
 
             st.rerun()
 
     else:
 
-        if st.session_state.last_correct:
+        # Frase completa
+        full_sentence = question["sentence"].replace(
+            "___",
+            question["correct_article"],
+            1,
+        )
+
+        if st.session_state.last_correct[module]:
 
             st.success("✅ ¡Correcto!")
 
         else:
 
-            st.error("❌ Incorrecto.")
-
-            st.write(
-                f"Respuesta correcta: "
-                f"**{question['answer']}**"
+            st.error(
+                f"❌ El artículo correcto es "
+                f"**{question['correct_article']}**."
             )
 
-        # Mostrar la frase completa
-        full_sentence = question["sentence"].replace(
-            "___",
-            question["answer"]
-        )
-
         st.markdown(
-            f"""
-            <div class="case-box">
-            <strong>{full_sentence}</strong>
-            <br><br>
-            🇪🇸 {question["translation_sentence"]}
-            </div>
-            """,
-            unsafe_allow_html=True
+            f'<div class="case_sentence">'
+            f'{full_sentence}'
+            f'</div>',
+            unsafe_allow_html=True,
         )
 
-        st.write(
-            f"**Caso:** {question['case']}"
+        # Explicación después de contestar.
+        st.info(
+            f"**Caso: {question['case']}**\n\n"
+            f"{question['reason']}"
         )
 
-        st.caption(
-            f"💡 {question['explanation']}"
-        )
+        if question["translation"]:
+            st.caption(
+                f"🇪🇸 Sustantivo: "
+                f"{question['translation']}"
+            )
 
-        if st.button("➡️ Siguiente"):
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_case_{question['id']}",
+        ):
 
-            reset_question(cases_df)
+            st.session_state.questions[module] = (
+                create_case_question()
+            )
+
+            st.session_state.answered[module] = False
+            st.session_state.last_correct[module] = None
+            st.session_state.last_answer[module] = ""
+            st.session_state.case_input = ""
 
             st.rerun()
 
 
 # ============================================================
-# ESTADÍSTICAS
+# MÓDULO 6 — DECLINACIONES
 # ============================================================
 
-st.sidebar.divider()
+elif module == "Declinaciones":
 
-st.sidebar.subheader("📊 Sesión")
+    # --------------------------------------------------------
+    # Banco de sustantivos
+    # --------------------------------------------------------
 
-if st.session_state.total > 0:
+    nouns = filtered[
+        filtered["part_of_speech"]
+        .fillna("")
+        .str.lower()
+        .str.strip()
+        .eq("noun")
+    ].copy()
 
-    accuracy = (
-        st.session_state.score
-        /
-        st.session_state.total
-        *
-        100
-    )
+    nouns = nouns[
+        nouns["article"]
+        .fillna("")
+        .str.lower()
+        .str.strip()
+        .isin(["der", "die", "das"])
+    ].copy()
 
-else:
+    nouns = nouns[
+        nouns["word"]
+        .fillna("")
+        .str.strip()
+        .ne("")
+    ].copy()
 
-    accuracy = 0
-
-
-st.sidebar.metric(
-    "Aciertos",
-    f"{st.session_state.score}/{st.session_state.total}"
-)
-
-st.sidebar.metric(
-    "Precisión",
-    f"{accuracy:.0f}%"
-)
-
-
-# ============================================================
-# HISTORIAL
-# ============================================================
-
-if st.sidebar.button(
-    "🗑️ Reiniciar sesión"
-):
-
-    st.session_state.score = 0
-    st.session_state.total = 0
-    st.session_state.current_word = None
-    st.session_state.answered = False
-
-    st.rerun()
-
-
-# ============================================================
-# ESTADÍSTICAS DE BASE DE DATOS
-# ============================================================
-
-with st.expander("📈 Estadísticas generales"):
-
-    conn = sqlite3.connect(DB_FILE)
-
-    history = pd.read_sql_query(
-        """
-        SELECT
-            module,
-            COUNT(*) AS preguntas,
-            SUM(correct) AS aciertos
-        FROM answers
-        GROUP BY module
-        ORDER BY module
-        """,
-        conn
-    )
-
-    conn.close()
-
-    if history.empty:
-
-        st.info(
-            "Todavía no hay estadísticas."
+    if nouns.empty:
+        st.warning(
+            "No hay sustantivos adecuados para generar ejercicios."
         )
+        st.stop()
+
+    # --------------------------------------------------------
+    # Adjetivos
+    # --------------------------------------------------------
+    # Los adjetivos se mantienen separados del Excel para que
+    # podamos generar muchas combinaciones sin añadir cientos
+    # de filas manualmente.
+
+    ADJECTIVES = [
+        "blau",
+        "groß",
+        "klein",
+        "alt",
+        "neu",
+        "gut",
+        "schön",
+        "schnell",
+        "langsam",
+        "teuer",
+        "billig",
+        "wichtig",
+        "interessant",
+        "lang",
+        "kurz",
+        "jung",
+        "warm",
+        "kalt",
+        "stark",
+        "schwach",
+        "leicht",
+        "schwer",
+        "sauber",
+        "schmutzig",
+        "hell",
+        "dunkel",
+        "freundlich",
+        "bekannt",
+        "modern",
+        "praktisch",
+    ]
+
+    # --------------------------------------------------------
+    # Reglas de declinación
+    # --------------------------------------------------------
+
+    def adjective_ending(adjective, case, gender, determiner):
+        """
+        Devuelve el adjetivo declinado.
+
+        determiner:
+        - definite: der/die/das
+        - indefinite: ein/eine/ein
+        - none: sin artículo
+
+        Para empezar, el módulo trabaja singular.
+        """
+
+        endings = {
+            "definite": {
+                "Nominativ": {
+                    "masculine": "e",
+                    "feminine": "e",
+                    "neuter": "e",
+                },
+                "Akkusativ": {
+                    "masculine": "en",
+                    "feminine": "e",
+                    "neuter": "e",
+                },
+                "Dativ": {
+                    "masculine": "en",
+                    "feminine": "en",
+                    "neuter": "en",
+                },
+            },
+            "indefinite": {
+                "Nominativ": {
+                    "masculine": "er",
+                    "feminine": "e",
+                    "neuter": "es",
+                },
+                "Akkusativ": {
+                    "masculine": "en",
+                    "feminine": "e",
+                    "neuter": "es",
+                },
+                "Dativ": {
+                    "masculine": "en",
+                    "feminine": "en",
+                    "neuter": "en",
+                },
+            },
+            "none": {
+                "Nominativ": {
+                    "masculine": "er",
+                    "feminine": "e",
+                    "neuter": "es",
+                },
+                "Akkusativ": {
+                    "masculine": "en",
+                    "feminine": "e",
+                    "neuter": "es",
+                },
+                "Dativ": {
+                    "masculine": "em",
+                    "feminine": "er",
+                    "neuter": "em",
+                },
+            },
+        }
+
+        ending = endings[determiner][case][gender]
+
+        # Algunas palabras necesitan una transformación ortográfica.
+        # Para este módulo mantenemos los adjetivos regulares.
+        return adjective + ending
+
+    def gender_from_article(article):
+        article = normalize(article)
+
+        return {
+            "der": "masculine",
+            "die": "feminine",
+            "das": "neuter",
+        }[article]
+
+    def article_for_declension(base_article, case, determiner):
+        """
+        Artículos definidos e indefinidos en singular.
+        """
+
+        gender = gender_from_article(base_article)
+
+        if determiner == "definite":
+            mapping = {
+                "Nominativ": {
+                    "masculine": "der",
+                    "feminine": "die",
+                    "neuter": "das",
+                },
+                "Akkusativ": {
+                    "masculine": "den",
+                    "feminine": "die",
+                    "neuter": "das",
+                },
+                "Dativ": {
+                    "masculine": "dem",
+                    "feminine": "der",
+                    "neuter": "dem",
+                },
+            }
+
+            return mapping[case][gender]
+
+        if determiner == "indefinite":
+            mapping = {
+                "Nominativ": {
+                    "masculine": "ein",
+                    "feminine": "eine",
+                    "neuter": "ein",
+                },
+                "Akkusativ": {
+                    "masculine": "einen",
+                    "feminine": "eine",
+                    "neuter": "ein",
+                },
+                "Dativ": {
+                    "masculine": "einem",
+                    "feminine": "einer",
+                    "neuter": "einem",
+                },
+            }
+
+            return mapping[case][gender]
+
+        return ""
+
+    DECLENSION_TEMPLATES = {
+        "Nominativ": [
+            "{phrase} ist sehr schön.",
+            "{phrase} steht dort.",
+            "{phrase} ist heute wichtig.",
+            "{phrase} kommt heute.",
+        ],
+        "Akkusativ": [
+            "Ich sehe {phrase}.",
+            "Ich kaufe {phrase}.",
+            "Ich brauche {phrase}.",
+            "Ich suche {phrase}.",
+        ],
+        "Dativ": [
+            "Ich fahre mit {phrase}.",
+            "Ich spreche mit {phrase}.",
+            "Ich arbeite mit {phrase}.",
+            "Ich bin bei {phrase}.",
+        ],
+    }
+
+    def create_declension_question():
+        cases = ["Nominativ", "Akkusativ", "Dativ"]
+
+        # Preferimos ambos tipos para practicar:
+        # artículo definido y artículo indefinido.
+        determiners = ["definite", "indefinite"]
+
+        for _ in range(50):
+            selected_case = random.choice(cases)
+            determiner = random.choice(determiners)
+
+            noun_row = nouns.sample(
+                n=1
+            ).iloc[0].to_dict()
+
+            base_article = normalize(noun_row["article"])
+            gender = gender_from_article(base_article)
+
+            adjective = random.choice(ADJECTIVES)
+            article = article_for_declension(
+                base_article,
+                selected_case,
+                determiner,
+            )
+
+            declined_adjective = adjective_ending(
+                adjective,
+                selected_case,
+                gender,
+                determiner,
+            )
+
+            phrase = (
+                f"{article} "
+                f"{declined_adjective} "
+                f"{noun_row['word']}"
+            )
+
+            template = random.choice(
+                DECLENSION_TEMPLATES[selected_case]
+            )
+
+            sentence = template.format(
+                phrase=(
+                    "___ ___ "
+                    f"{noun_row['word']}"
+                )
+            )
+
+            question_id = (
+                f"{selected_case}|"
+                f"{determiner}|"
+                f"{noun_row['id']}|"
+                f"{adjective}|"
+                f"{template}"
+            )
+
+            recent = get_recent_question_ids(
+                "Declinaciones",
+                limit=120,
+            )
+
+            if question_id not in recent:
+                register_question(
+                    "Declinaciones",
+                    question_id,
+                )
+
+                return {
+                    "id": question_id,
+                    "case": selected_case,
+                    "determiner": determiner,
+                    "gender": gender,
+                    "noun": noun_row["word"],
+                    "noun_id": noun_row["id"],
+                    "translation": noun_row["translation"],
+                    "adjective": adjective,
+                    "correct_article": article,
+                    "correct_adjective": declined_adjective,
+                    "phrase": phrase,
+                    "sentence": sentence,
+                }
+
+        # Fallback si se agotó temporalmente el banco.
+        selected_case = random.choice(cases)
+        determiner = random.choice(determiners)
+        noun_row = nouns.sample(n=1).iloc[0].to_dict()
+
+        base_article = normalize(noun_row["article"])
+        gender = gender_from_article(base_article)
+        adjective = random.choice(ADJECTIVES)
+
+        article = article_for_declension(
+            base_article,
+            selected_case,
+            determiner,
+        )
+
+        declined_adjective = adjective_ending(
+            adjective,
+            selected_case,
+            gender,
+            determiner,
+        )
+
+        template = random.choice(
+            DECLENSION_TEMPLATES[selected_case]
+        )
+
+        question_id = (
+            f"{selected_case}|"
+            f"{determiner}|"
+            f"{noun_row['id']}|"
+            f"{adjective}|"
+            f"{template}"
+        )
+
+        register_question(
+            "Declinaciones",
+            question_id,
+        )
+
+        return {
+            "id": question_id,
+            "case": selected_case,
+            "determiner": determiner,
+            "gender": gender,
+            "noun": noun_row["word"],
+            "noun_id": noun_row["id"],
+            "translation": noun_row["translation"],
+            "adjective": adjective,
+            "correct_article": article,
+            "correct_adjective": declined_adjective,
+            "phrase": f"{article} {declined_adjective} {noun_row['word']}",
+            "sentence": template.format(
+                phrase=(
+                    "___ ___ "
+                    f"{noun_row['word']}"
+                )
+            ),
+        }
+
+    # --------------------------------------------------------
+    # Pregunta actual
+    # --------------------------------------------------------
+
+    if st.session_state.questions[module] is None:
+        st.session_state.questions[module] = (
+            create_declension_question()
+        )
+
+    question = st.session_state.questions[module]
+
+    st.subheader("🧩 Declinaciones")
+
+    st.caption(
+        "Artículo + adjetivo + sustantivo · "
+        "Nominativ · Akkusativ · Dativ"
+    )
+
+    st.markdown(
+        "Completa **el artículo y la terminación del adjetivo**."
+    )
+
+    st.markdown(
+        f'<div class="case_sentence">'
+        f'{question["sentence"]}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        article_input = st.text_input(
+            "Artículo",
+            key="decl_article_input",
+            placeholder="z. B. einem",
+        )
+
+    with col2:
+        adjective_input = st.text_input(
+            "Adjetivo declinado",
+            key="decl_adjective_input",
+            placeholder=f"z. B. {question['adjective']}en",
+        )
+
+    if st.button(
+        "Comprobar",
+        key=f"check_decl_{question['id']}",
+    ):
+        article_correct = (
+            normalize(article_input)
+            == normalize(question["correct_article"])
+        )
+
+        adjective_correct = (
+            normalize(adjective_input)
+            == normalize(question["correct_adjective"])
+        )
+
+        correct = article_correct and adjective_correct
+
+        user_answer = (
+            f"{article_input.strip()} "
+            f"{adjective_input.strip()}"
+        ).strip()
+
+        correct_answer = (
+            f"{question['correct_article']} "
+            f"{question['correct_adjective']}"
+        )
+
+        mark_answer(
+            module,
+            question["noun"],
+            st.session_state.level,
+            user_answer,
+            correct_answer,
+            correct,
+        )
+
+        st.rerun()
 
     else:
+        if not st.session_state.answered[module]:
+            st.info(
+                "Ejemplo del tipo de ejercicio: "
+                "**mit ___ ___ Auto** → "
+                "artículo + adjetivo."
+            )
 
-        history["precisión"] = (
-            history["aciertos"]
-            /
-            history["preguntas"]
-            *
-            100
-        ).round(1)
+    if st.session_state.answered[module]:
 
-        st.dataframe(
-            history,
-            use_container_width=True,
-            hide_index=True
+        if st.session_state.last_correct[module]:
+            st.success("✅ ¡Correcto!")
+
+        else:
+            st.error("❌ Hay una o más partes incorrectas.")
+
+        st.markdown(
+            f"### Solución: "
+            f"**{question['correct_article']} "
+            f"{question['correct_adjective']} "
+            f"{question['noun']}**"
         )
+
+        st.info(
+            f"**Caso:** {question['case']}  \n"
+            f"**Género:** {question['gender']}  \n"
+            f"**Tipo de artículo:** "
+            f"{'definido' if question['determiner'] == 'definite' else 'indefinido'}"
+        )
+
+        if question["determiner"] == "indefinite":
+            st.caption(
+                "Aquí practicamos la declinación mixta: "
+                "el artículo aporta parte de la información "
+                "gramatical y el adjetivo toma la terminación "
+                "correspondiente."
+            )
+        else:
+            st.caption(
+                "Con artículo definido, el adjetivo normalmente "
+                "lleva una terminación débil: -e o -en."
+            )
+
+        if question["translation"]:
+            st.caption(
+                f"🇪🇸 Sustantivo: {question['translation']}"
+            )
+
+        if st.button(
+            "➡️ Siguiente",
+            key=f"next_decl_{question['id']}",
+        ):
+            st.session_state.questions[module] = (
+                create_declension_question()
+            )
+            st.session_state.answered[module] = False
+            st.session_state.last_correct[module] = None
+            st.session_state.last_answer[module] = ""
+            st.session_state.decl_article_input = ""
+            st.session_state.decl_adjective_input = ""
+
+            st.rerun()
+
+
+# ============================================================
+# INFORMACIÓN
+# ============================================================
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption(
+    "Las preguntas recientes se registran en SQLite "
+    "para reducir repeticiones."
+)
